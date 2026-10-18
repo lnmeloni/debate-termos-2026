@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Termos do debate</title>
-<meta name="description" content="O chat ao vivo do YouTube da Band durante o debate Lula × Flávio Bolsonaro, minuto a minuto.">
+<meta name="description" content="Os chats ao vivo do YouTube durante o debate Lula × Flávio Bolsonaro, minuto a minuto.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
@@ -54,17 +54,41 @@
   .row .b { height:10px; border-radius:0 4px 4px 0; background:var(--bar2); min-width:2px; }
   .row .n { text-align:right; font-variant-numeric:tabular-nums; color:var(--fg2); font-size:13px; white-space:nowrap; }
   .row .n small { color:var(--mut); }
+  .passos { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px 24px; margin-top:8px; font-size:14px; color:var(--fg2); }
+  .passos h3 { font-size:14px; margin:8px 0 2px; color:var(--fg); }
+  .passos p { margin:4px 0; }
+  .passos ul { margin:4px 0; padding-left:18px; }
+  .passos li { margin:3px 0; }
+  .lc { font-size:13px; }
   .notes { margin-top:20px; color:var(--mut); font-size:13px; }
   .notes ul { margin:6px 0 0; padding-left:18px; }
   .notes li { margin:3px 0; }
   a { color:inherit; }
+  .tblw { margin-top:12px; overflow-x:auto; }
+  table.tbl { width:100%; border-collapse:collapse; font-size:14px; }
+  .tbl th { text-align:right; font-weight:500; font-size:12px; color:var(--mut); padding:6px 6px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .tbl td { text-align:right; padding:6px 6px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; color:var(--fg2); white-space:nowrap; }
+  .tbl th:first-child, .tbl td:first-child { text-align:left; padding-left:0; white-space:normal; }
+  .tbl th:last-child, .tbl td:last-child { padding-right:0; }
+  .tbl td:first-child a { color:var(--fg); text-decoration:none; border-bottom:1px solid var(--line); }
+  .tbl tr:last-child td { border-bottom:0; }
+  .tbl .sw { margin-right:4px; vertical-align:-1px; }
+  .tbl .sm { display:none; }
+  @media (max-width:480px) { .tbl { font-size:13px; } .tbl th, .tbl td { padding:6px 3px; } .tbl .lg { display:none; } .tbl .sm { display:inline; } }
+  .minis { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px; margin-top:12px; }
+  .mini { border:1px solid var(--line); border-radius:8px; padding:10px 10px 6px; min-width:0; }
+  .mini h3 { font-size:13px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mini .mut { font-size:12px; }
+  .mini .mc { position:relative; height:140px; margin-top:4px; }
+  .leg { display:flex; gap:14px; font-size:12px; color:var(--fg2); margin-top:10px; align-items:center; flex-wrap:wrap; }
+  .leg i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:5px; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>O chat do debate, minuto a minuto</h1>
-    <p class="sub">Lula × Flávio Bolsonaro · Band · 18/10/2026 · chat ao vivo do YouTube da Band</p>
+    <p class="sub">Lula × Flávio Bolsonaro · debate da Band · 18/10/2026 · os gráficos gerais usam o chat da live da Band Jornalismo; a seção “Por canal” compara 8 lives</p>
     <div class="meta"><span class="dot off" id="dot"></span><span id="meta">carregando…</span></div>
   </header>
 
@@ -88,20 +112,44 @@
     <div class="chart"><canvas id="s" aria-label="Sentimento por minuto" role="img"></canvas></div>
   </section>
 
+  <section class="card" id="canais-sec">
+    <h2>Por canal</h2>
+    <p class="mut">Cada chat tem a sua audiência (há canais de react e de análise), então a comparação mostra bolhas diferentes, não o eleitorado. Saldo médio ponderado pelo número de mensagens classificadas, só nos minutos com dado.</p>
+    <div class="tblw"><table class="tbl" id="canais-tbl"></table></div>
+    <div class="leg"><span><i style="background:var(--lula)"></i>Lula</span><span><i style="background:var(--fla)"></i>Flávio</span><span class="mut" style="font-size:12px">linha = média móvel de 3 min · pontos = cada minuto</span></div>
+    <div class="minis" id="minis"></div>
+    <p class="mut" id="minis-oc" style="margin-top:8px"></p>
+  </section>
+
   <div class="grid2">
     <section class="card"><h2>Mais falados</h2><p class="mut" id="mais-lab">últimos 5 minutos</p><div class="rows" id="mais"></div></section>
     <section class="card"><h2>Subindo</h2><p class="mut">quantas vezes mais frequente que no resto do debate</p><div class="rows" id="sub"></div></section>
   </div>
 
-  <div class="notes">
-    <strong style="color:var(--fg2)">Como ler</strong>
-    <ul>
-      <li>O chat da Band não representa o eleitorado, só quem está ali comentando. Olhe a variação ao longo do debate, não o nível.</li>
-      <li>O sentimento vem de uma amostra de até 120 mensagens por minuto, classificada pelo Claude (haiku).</li>
-      <li>Atraso de 2 a 5 minutos. Cada termo conta uma vez por mensagem. A página se atualiza sozinha a cada 30 segundos.</li>
-      <li>Código em <a href="https://github.com/lnmeloni/debate-termos-2026">github.com/lnmeloni/debate-termos-2026</a>.</li>
-    </ul>
-  </div>
+  <section class="card como">
+    <h2>Como é feito</h2>
+    <div class="passos">
+      <div><h3>1. Coleta</h3>
+        <p>Um robô lê o chat ao vivo de 8 transmissões do debate no YouTube, mensagem a mensagem, usando a ferramenta aberta yt-dlp. Cada canal é lido desde que a sua coleta começou: a Band desde cerca de 20h06, os outros desde cerca de 20h35.</p>
+        <ul id="lista-canais" class="lc"></ul></div>
+      <div><h3>2. Termos</h3>
+        <p>Cada mensagem é quebrada em palavras e pares de palavras, sem as palavras vazias (artigos, preposições e afins). Um termo conta uma vez por mensagem, mesmo que apareça repetido.</p>
+        <p>"Mais falados" são os termos dos últimos 5 minutos. "Subindo" é a frequência nos últimos 5 minutos dividida pela frequência no resto do debate.</p></div>
+      <div><h3>3. Sentimento</h3>
+        <p>A cada minuto fechado, o robô sorteia até 120 mensagens (80 nos canais menores) que citam um dos candidatos pelo nome, apelido, partido ou por bolsonarismo. O modelo Claude Haiku, da Anthropic, marca cada uma como favorável, desfavorável ou neutra para cada candidato.</p>
+        <p>O saldo é (favoráveis − desfavoráveis) ÷ mensagens que falam do candidato, e vai de −1 a +1. A linha dos gráficos é a média dos últimos 3 minutos.</p></div>
+      <div><h3>4. Limites</h3>
+        <ul>
+          <li>Chat não é eleitorado, e cada live tem a sua bolha. Vale olhar a variação, não o nível.</li>
+          <li>Ironia e torcida organizada existem, e o modelo pode errar nelas.</li>
+          <li>Minutos com poucas mensagens oscilam muito. Passe o mouse num ponto para ver quantas entraram (n).</li>
+          <li>Os dados chegam com 2 a 5 minutos de atraso. A página se atualiza sozinha a cada 30 segundos.</li>
+          <li>Só números agregados são publicados, nenhum nome de usuário nem mensagem.</li>
+        </ul></div>
+      <div><h3>5. Código aberto</h3>
+        <p>Todo o código está em <a href="https://github.com/lnmeloni/debate-termos-2026">github.com/lnmeloni/debate-termos-2026</a>.</p></div>
+    </div>
+  </section>
 </main>
 <script>
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -111,7 +159,7 @@ const nf = new Intl.NumberFormat("pt-BR");
 const sgn = (x, d = 2) => { const a = Math.abs(x).toFixed(d); return (+a === 0 ? "" : x > 0 ? "+" : "−") + a.replace(".", ","); };
 const num = x => (x === "" || x === null || x === undefined || isNaN(+x)) ? null : +x;
 const INICIO = "20:05";
-let charts = {}, ultimo = { t: null, s: null };
+let charts = {}, ultimo = { t: null, s: null, c: null }, EIXO = null, MINIS = "";
 
 function base(yopts) {
   return { maintainAspectRatio: false, responsive: true, animation: false,
@@ -150,7 +198,8 @@ function barras(el, rows, val, txt) {
     <span class="n">${txt(r)}</span></div>`).join("");
 }
 
-function render() {
+function render() { try { EIXO = render0(); } catch (e) { console.warn(e); } try { renderCanais(); } catch (e) { console.warn(e); } }
+function render0() {
   const d = ultimo.t, s = ultimo.s;
   let eixo = null;
   if (d) {
@@ -212,12 +261,66 @@ function render() {
       kpi(L, nL, "k-l"); kpi(F, nF, "k-f");
     }
   }
+  return eixo;
+}
+
+function renderCanais() {
+  const c = ultimo.c; if (!c || !c.canais) return;
+  const menos = (hm, d) => { const [h, m] = hm.split(":").map(Number); const t = (h * 60 + m - d + 1440) % 1440;
+    return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"); };
+  const linhas = c.canais.map(k => {
+    const se = (k.serie || []).filter(x => x[0] >= INICIO);
+    const by = Object.fromEntries(se.map(x => [x[0], x]));
+    // por minuto agora: 3 minutos antes do último minuto do canal (que ainda está incompleto)
+    const ult3 = se.length ? [1, 2, 3].map(dd => menos(se[se.length - 1][0], dd)) : [];
+    const pm = ult3.length ? ult3.reduce((a, m) => a + (by[m] ? +by[m][1] || 0 : 0), 0) / 3 : null;
+    const med = (iv, in_) => { let a = 0, b = 0; se.forEach(x => { const v = num(x[iv]), n = +x[in_] || 0; if (v !== null && n) { a += v * n; b += n; } }); return b ? a / b : null; };
+    const nmin = se.filter(x => (num(x[2]) !== null && +x[4]) || (num(x[3]) !== null && +x[5])).length;
+    return { k, se, by, pm, L: med(2, 4), F: med(3, 5), nmin };
+  }).sort((a, b) => (b.k.n_total || 0) - (a.k.n_total || 0));
+  const f = x => x === null ? "–" : sgn(x);
+  $("lista-canais").innerHTML = c.canais.map(k => `<li><a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.rotulo || k.nome)}</a></li>`).join("");
+  $("canais-tbl").innerHTML = `<thead><tr><th>Canal</th><th><span class="lg">Mensagens</span><span class="sm">Msgs</span></th><th><span class="lg">Por min agora</span><span class="sm">/min</span></th><th><span class="sw" style="background:var(--lula)"></span>Lula</th><th><span class="sw" style="background:var(--fla)"></span>Flávio</th></tr></thead><tbody>` +
+    linhas.map(r => `<tr><td><a href="${esc(r.k.url)}" target="_blank" rel="noopener">${esc(r.k.rotulo || r.k.nome)}</a></td><td>${nf.format(r.k.n_total || 0)}</td><td>${r.pm === null ? "–" : nf.format(Math.round(r.pm))}</td><td>${f(r.L)}</td><td>${f(r.F)}</td></tr>`).join("") + "</tbody>";
+  // small multiples
+  const vis = linhas.filter(r => r.nmin >= 3), oc = linhas.filter(r => r.nmin < 3);
+  $("minis-oc").textContent = oc.length ? `Sem minigráfico por ter menos de 3 minutos de sentimento classificado: ${oc.map(r => r.k.rotulo || r.k.nome).join(", ")}.` : "";
+  let fim = EIXO ? EIXO[EIXO.length - 1] : INICIO;
+  vis.forEach(r => { const u = r.se.length ? r.se[r.se.length - 1][0] : fim; if (u > fim) fim = u; });
+  const eixo = minutos(INICIO, fim);
+  const chave = vis.map(r => r.k.nome).join("|");
+  if (chave !== MINIS) {
+    Object.keys(charts).filter(id => id.startsWith("cm-")).forEach(id => { charts[id].destroy(); delete charts[id]; });
+    $("minis").innerHTML = vis.map((r, i) => `<div class="mini"><h3 title="${esc(r.k.rotulo || r.k.nome)}">${esc(r.k.rotulo || r.k.nome)}</h3><div class="mc"><canvas id="cm-${i}" role="img" aria-label="Sentimento em ${esc(r.k.rotulo || r.k.nome)}"></canvas></div></div>`).join("");
+    MINIS = chave;
+  }
+  vis.forEach((r, i) => {
+    const v = k => eixo.map(m => r.by[m] ? num(r.by[m][k]) : null);
+    const n = k => eixo.map(m => r.by[m] ? (+r.by[m][k] || 0) : 0);
+    const L = v(2), F = v(3), nL = n(4), nF = n(5);
+    const o = base({ min: -1, max: 1, afterBuildTicks: ax => { ax.ticks = [{ value: -1 }, { value: 0 }, { value: 1 }]; },
+      ticks: { color: css("--mut"), font: { size: 10 }, callback: x => x === 0 ? "0" : sgn(x, 0) },
+      grid: { color: c => c.tick.value === 0 ? css("--mut") : css("--grid"), lineWidth: c => c.tick.value === 0 ? 1.2 : 1 } });
+    o.plugins.legend.display = false;
+    o.scales.x.ticks.maxTicksLimit = 4; o.scales.x.ticks.font = { size: 10 };
+    const ns = [nL, nF, nL, nF];
+    o.plugins.tooltip.callbacks = { label: c => { if (c.parsed.y === null) return null;
+      const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
+      return c.datasetIndex < 2 ? `${nome}, média 3 min: ${sgn(c.parsed.y)}` : `${nome}, neste minuto: ${sgn(c.parsed.y)} (n=${ns[c.datasetIndex][c.dataIndex]})`; } };
+    draw("cm-" + i, eixo, [
+      linha("Lula (média 3 min)", mm3(L, nL), css("--lula"), { spanGaps: true }),
+      linha("Flávio (média 3 min)", mm3(F, nF), css("--fla"), { spanGaps: true }),
+      linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
+      linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
+    ], o);
+  });
 }
 
 async function atualiza() {
   try { ultimo.t = await (await fetch("termos.json?t=" + Date.now())).json(); }
   catch (e) { if (!ultimo.t) $("meta").textContent = "aguardando dados…"; }
   try { ultimo.s = await (await fetch("sentimento.json?t=" + Date.now())).json(); } catch (e) {}
+  try { ultimo.c = await (await fetch("canais.json?t=" + Date.now())).json(); } catch (e) {}
   try { render(); } catch (e) { console.warn(e); }
 }
 // troca de tema: refaz os gráficos com as cores novas
