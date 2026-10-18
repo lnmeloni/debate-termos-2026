@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termos do debate</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#fafaf8; --fg:#1c1c1a; --mut:#6b6b66; --line:#e3e2dc; --lula:#c8102e; --fla:#1f5fa8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --fg:#ecebe6; --mut:#9a9992; --line:#2c2c29; } }
+  body { background:var(--bg); color:var(--fg); font:15px/1.4 -apple-system, system-ui, sans-serif; margin:0; padding:16px; }
+  main { max-width:960px; margin:auto; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .mut { color:var(--mut); font-size:13px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:16px; }
+  @media (max-width:640px) { .grid { grid-template-columns:1fr; } }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:4px 0; border-bottom:1px solid var(--line); }
+  td.n { text-align:right; font-variant-numeric:tabular-nums; color:var(--mut); width:4em; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--mut); margin:0 0 6px; }
+  .chart { margin-top:24px; height:240px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Termos mais falados no chat do debate</h1>
+  <div class="mut">Flávio Bolsonaro × Lula, Band, 18/10/2026 · chat ao vivo do YouTube da Band · cada termo conta uma vez por mensagem</div>
+  <div class="mut" id="meta">carregando…</div>
+  <div class="grid">
+    <section><h2>Mais falados · últimos 5 min</h2><table id="mais"></table></section>
+    <section><h2>Subindo · vs. resto do debate</h2><table id="sub"></table></section>
+  </div>
+  <div class="chart"><canvas id="c"></canvas></div>
+  <div class="mut">Atraso de 2 a 4 minutos (coleta em blocos + publicação). O chat da live não representa as redes.</div>
+</main>
+<script>
+let chart;
+function linhas(el, rows, f) { document.getElementById(el).innerHTML = rows.map(f).join(""); }
+async function atualiza() {
+  try {
+    const d = await (await fetch("termos.json?t=" + Date.now())).json();
+    document.getElementById("meta").textContent = `janela ${d.janela} · ${d.n_janela} mensagens · ${d.n_total} no total · publicado ${d.atualizado}`;
+    linhas("mais", d.mais, r => `<tr><td>${r[0]}</td><td class="n">${r[1]}</td></tr>`);
+    linhas("sub", d.subindo, r => `<tr><td>${r[0]}</td><td class="n">×${r[2]}</td></tr>`);
+    const lab = d.serie.map(s => s[0]);
+    const ds = [
+      { label: "msgs com Lula", data: d.serie.map(s => s[2]), borderColor: getComputedStyle(document.documentElement).getPropertyValue("--lula") },
+      { label: "msgs com Flávio/Bolsonaro", data: d.serie.map(s => s[3]), borderColor: getComputedStyle(document.documentElement).getPropertyValue("--fla") },
+    ];
+    if (!chart) chart = new Chart(document.getElementById("c"), { type: "line", data: { labels: lab, datasets: ds },
+      options: { maintainAspectRatio: false, animation: false, elements: { point: { radius: 0 } } } });
+    else { chart.data.labels = lab; chart.data.datasets.forEach((x, i) => x.data = ds[i].data); chart.update(); }
+  } catch (e) { document.getElementById("meta").textContent = "aguardando dados…"; }
+}
+atualiza(); setInterval(atualiza, 30000);
+</script>
+</body>
+</html>
