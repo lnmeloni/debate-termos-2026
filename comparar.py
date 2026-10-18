@@ -21,6 +21,7 @@ CANAIS = {  # nome: (rótulo, url da live)
     "benmendes": ("Ben Mendes TV", "https://www.youtube.com/watch?v=huBXBz4R92o"),
     "tragicomico": ("Canal Tragicômico (análise)", "https://www.youtube.com/watch?v=mwR0LgDFU6A"),
     "mrtv": ("MRTV Márcio Rangel", "https://www.youtube.com/watch?v=KssLMd-3B8s"),
+    "bluesky": ("Bluesky (posts em português)", "https://bsky.app/search?q=debate%20lula%20fl%C3%A1vio"),
 }
 
 def rodar():
