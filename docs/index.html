@@ -88,7 +88,7 @@
 <main>
   <header>
     <h1>O chat do debate, minuto a minuto</h1>
-    <p class="sub">Lula × Flávio Bolsonaro · debate da Band · 18/10/2026 · os gráficos gerais usam o chat da live da Band Jornalismo; a seção “Por canal” compara 8 lives</p>
+    <p class="sub">Lula × Flávio Bolsonaro · debate da Band · 18/10/2026 · os gráficos gerais usam o chat da live da Band Jornalismo; a seção “Por canal” compara 8 lives do YouTube e o Bluesky</p>
     <div class="meta"><span class="dot off" id="dot"></span><span id="meta">carregando…</span></div>
   </header>
 
@@ -130,7 +130,7 @@
     <h2>Como é feito</h2>
     <div class="passos">
       <div><h3>1. Coleta</h3>
-        <p>Um robô lê o chat ao vivo de 8 transmissões do debate no YouTube, mensagem a mensagem, usando a ferramenta aberta yt-dlp. Cada canal é lido desde que a sua coleta começou: a Band desde cerca de 20h06, os outros desde cerca de 20h35.</p>
+        <p>Um robô lê o chat ao vivo de 8 transmissões do debate no YouTube, mensagem a mensagem, usando a ferramenta aberta yt-dlp. Desde 20h43 também lê o fluxo público do Bluesky (Jetstream), guardando os posts em português que citam Lula, Flávio, Bolsonaro ou o debate. Cada canal é lido desde que a sua coleta começou: a Band desde cerca de 20h06, os outros desde cerca de 20h35.</p>
         <ul id="lista-canais" class="lc"></ul></div>
       <div><h3>2. Termos</h3>
         <p>Cada mensagem é quebrada em palavras e pares de palavras, sem as palavras vazias (artigos, preposições e afins). Um termo conta uma vez por mensagem, mesmo que apareça repetido.</p>
