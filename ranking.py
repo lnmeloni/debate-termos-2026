@@ -1,6 +1,6 @@
 """Lê o chat coletado pelo yt-dlp e mostra os termos mais falados por janela de tempo.
 
-Uso: venv/bin/python ranking.py <nome> [janela_min=5] [top=20] [--loop]
+Uso: venv/bin/python ranking.py <nome> [janela_min=5] [top=20] [--loop] [--docs]
 Lê dados/<nome>.live_chat.json* (escritos só pelo coletar.sh).
 Escreve dados/<nome>_mensagens.csv e dados/<nome>_termos_por_minuto.csv (donos: este script).
 """
@@ -19,6 +19,7 @@ args = [a for a in sys.argv[2:] if not a.startswith("--")]
 janela = int(args[0]) if args else 5
 top = int(args[1]) if len(args) > 1 else 20
 loop = "--loop" in sys.argv
+docs = "--docs" in sys.argv  # só o canal principal escreve docs/termos.json
 BRT = timezone(timedelta(hours=-3))
 
 STOP = set("""
@@ -103,7 +104,8 @@ def rodar():
     for t, _, m in msgs:
         mi = t.strftime("%H:%M"); s = serie.setdefault(mi, [0, 0, 0]); x = norm(m)
         s[0] += 1; s[1] += "lula" in x; s[2] += ("flavio" in x or "bolsonaro" in x)
-    with open("docs/termos.json", "w", encoding="utf-8") as f:
+    if docs:
+      with open("docs/termos.json", "w", encoding="utf-8") as f:
         json.dump({"atualizado": datetime.now(BRT).strftime("%H:%M:%S"), "janela": f"{ini:%H:%M}–{fim:%H:%M}",
                    "n_janela": n, "n_total": len(msgs),
                    "mais": [[t, k] for t, k in mais], "subindo": [[t, k, round(l, 1)] for l, k, t in sub[:top]],

@@ -1,6 +1,6 @@
 """Sentimento minuto a minuto do chat em relação a Lula e a Flávio, classificado pelo Claude (haiku).
 
-Uso: venv/bin/python sentimento.py <nome> [amostra=120]
+Uso: venv/bin/python sentimento.py <nome> [amostra=120] [--docs]
 Lê dados/<nome>_mensagens.csv (escrito pelo ranking.py).
 Escreve dados/<nome>_sentimento.csv e docs/sentimento.json (donos: este script).
 Cada minuto fechado é classificado uma vez: para cada mensagem, +1 favorável, -1 desfavorável,
@@ -18,7 +18,9 @@ import unicodedata
 from datetime import datetime, timedelta, timezone
 
 nome = sys.argv[1]
-amostra = int(sys.argv[2]) if len(sys.argv) > 2 else 120
+args = [a for a in sys.argv[2:] if not a.startswith("--")]
+amostra = int(args[0]) if args else 120
+docs = "--docs" in sys.argv  # só o canal principal escreve docs/sentimento.json
 BRT = timezone(timedelta(hours=-3))
 SAIDA = f"dados/{nome}_sentimento.csv"
 PROMPT = ("Mensagens do chat ao vivo do YouTube durante o debate presidencial do 2º turno de 2026 "
@@ -80,7 +82,8 @@ while True:
             with open(SAIDA, "w", newline="", encoding="utf-8") as f:
                 w = csv.DictWriter(f, fieldnames=campos); w.writeheader()
                 w.writerows(sorted(linhas.values(), key=lambda r: r["minuto_brt"]))
-            publicar(linhas)
+            if docs:
+                publicar(linhas)
             print(f"{mi}  Lula {linhas[mi]['saldo_lula']} (n={c['nl']})  Flávio {linhas[mi]['saldo_flavio']} (n={c['nf']})", flush=True)
     except Exception as e:
         print(f"{datetime.now():%H:%M:%S} erro: {e}", flush=True)

@@ -4,85 +4,224 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Termos do debate</title>
+<meta name="description" content="O chat ao vivo do YouTube da Band durante o debate Lula × Flávio Bolsonaro, minuto a minuto.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root { --bg:#fcfcfb; --fg:#1c1c1a; --mut:#6b6b66; --line:#e3e2dc; --grid:#efeee9; --tot:#8a8a85; --lula:#c8102e; --fla:#1f5fa8; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --fg:#ecebe6; --mut:#9a9992; --line:#2c2c29; --grid:#232321; --tot:#7a7a74; --lula:#e5484d; --fla:#4c8ed9; } }
-  body { background:var(--bg); color:var(--fg); font:15px/1.4 -apple-system, system-ui, sans-serif; margin:0; padding:16px; }
-  main { max-width:960px; margin:auto; }
-  h1 { font-size:20px; margin:0 0 4px; }
-  h2 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--mut); margin:28px 0 4px; }
-  .mut { color:var(--mut); font-size:13px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:8px; }
-  @media (max-width:640px) { .grid { grid-template-columns:1fr; } }
-  table { width:100%; border-collapse:collapse; }
-  td { padding:4px 0; border-bottom:1px solid var(--line); }
-  td.n { text-align:right; font-variant-numeric:tabular-nums; color:var(--mut); width:4em; }
-  .chart { height:260px; margin-top:8px; }
+  :root {
+    --bg:#fcfcfb; --card:#ffffff; --fg:#1c1c1a; --fg2:#3d3d39; --mut:#6b6b66; --line:#e3e2dc; --grid:#efeee9;
+    --tot:#8a8a85; --bar:#d9d8d1; --bar2:#bdbcb4; --lula:#c8102e; --fla:#1f5fa8; --live:#2f8f4e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#161614; --card:#1d1d1b; --fg:#ecebe6; --fg2:#c9c8c1; --mut:#9a9992; --line:#2c2c29; --grid:#262624;
+      --tot:#8a8a84; --bar:#3a3a36; --bar2:#4d4d48; --lula:#e5484d; --fla:#4c8ed9; --live:#4cb36d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#161614; --card:#1d1d1b; --fg:#ecebe6; --fg2:#c9c8c1; --mut:#9a9992; --line:#2c2c29; --grid:#262624;
+    --tot:#8a8a84; --bar:#3a3a36; --bar2:#4d4d48; --lula:#e5484d; --fla:#4c8ed9; --live:#4cb36d;
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { background:var(--bg); color:var(--fg); font:15px/1.45 -apple-system, system-ui, "Segoe UI", sans-serif; margin:0; padding:20px 16px 40px; overflow-x:hidden; }
+  main { max-width:1000px; margin:auto; }
+  header h1 { font-size:24px; line-height:1.2; margin:0 0 6px; letter-spacing:-.01em; }
+  .sub { color:var(--fg2); font-size:14px; margin:0; }
+  .meta { color:var(--mut); font-size:13px; margin-top:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--live); display:inline-block; flex:none; }
+  .dot.off { background:var(--mut); }
+  .kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin:20px 0 8px; }
+  @media (max-width:760px) { .kpis { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; min-width:0; }
+  .kpi .lab { font-size:12px; color:var(--mut); display:flex; align-items:center; gap:6px; }
+  .kpi .val { font-size:28px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.15; margin-top:4px; }
+  .kpi .delta { font-size:12px; color:var(--fg2); font-variant-numeric:tabular-nums; margin-top:2px; }
+  .sw { width:10px; height:10px; border-radius:2px; display:inline-block; flex:none; }
+  section.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:16px; min-width:0; }
+  h2 { font-size:16px; margin:0 0 2px; }
+  .mut { color:var(--mut); font-size:13px; margin:0; }
+  .chart { position:relative; height:280px; margin-top:12px; }
+  @media (max-width:640px) { .chart { height:240px; } header h1 { font-size:21px; } .kpi .val { font-size:24px; } }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px) { .grid2 { grid-template-columns:1fr; } }
+  .grid2 section.card { margin-top:16px; }
+  .rows { margin-top:10px; }
+  .row { display:grid; grid-template-columns:1.6em minmax(0,10em) minmax(0,1fr) auto; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .row:last-child { border-bottom:0; }
+  .row .i { color:var(--mut); font-size:12px; text-align:right; font-variant-numeric:tabular-nums; }
+  .row .t { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .tr { min-width:0; height:10px; }
+  .row .b { height:10px; border-radius:0 4px 4px 0; background:var(--bar2); min-width:2px; }
+  .row .n { text-align:right; font-variant-numeric:tabular-nums; color:var(--fg2); font-size:13px; white-space:nowrap; }
+  .row .n small { color:var(--mut); }
+  .notes { margin-top:20px; color:var(--mut); font-size:13px; }
+  .notes ul { margin:6px 0 0; padding-left:18px; }
+  .notes li { margin:3px 0; }
+  a { color:inherit; }
 </style>
 </head>
 <body>
 <main>
-  <h1>O chat do debate, minuto a minuto</h1>
-  <div class="mut">Flávio Bolsonaro × Lula, Band, 18/10/2026 · chat ao vivo do YouTube da Band</div>
-  <div class="mut" id="meta">carregando…</div>
+  <header>
+    <h1>O chat do debate, minuto a minuto</h1>
+    <p class="sub">Lula × Flávio Bolsonaro · Band · 18/10/2026 · chat ao vivo do YouTube da Band</p>
+    <div class="meta"><span class="dot off" id="dot"></span><span id="meta">carregando…</span></div>
+  </header>
 
-  <h2>Mensagens por minuto</h2>
-  <div class="mut">Total do chat e mensagens que citam cada candidato (nome, apelido, partido).</div>
-  <div class="chart"><canvas id="c"></canvas></div>
-
-  <h2>Sentimento por minuto</h2>
-  <div class="mut">Saldo de −1 (só ataque) a +1 (só apoio) sobre uma amostra de até 120 mensagens por minuto, classificada pelo Claude (haiku). Reflete quem está no chat da Band, não o eleitorado: olhe a variação, não o nível. Passe o mouse para ver quantas mensagens entraram em cada ponto.</div>
-  <div class="chart"><canvas id="s"></canvas></div>
-
-  <div class="grid">
-    <section><h2>Mais falados · últimos 5 min</h2><table id="mais"></table></section>
-    <section><h2>Subindo · vs. resto do debate</h2><table id="sub"></table></section>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">Mensagens no total</div><div class="val" id="k-tot">–</div><div class="delta" id="k-tot-d">&nbsp;</div></div>
+    <div class="kpi"><div class="lab">Mensagens por minuto agora</div><div class="val" id="k-pm">–</div><div class="delta" id="k-pm-d">&nbsp;</div></div>
+    <div class="kpi"><div class="lab"><span class="sw" style="background:var(--lula)"></span>Saldo Lula</div><div class="val" id="k-l">–</div><div class="delta" id="k-l-d">&nbsp;</div></div>
+    <div class="kpi"><div class="lab"><span class="sw" style="background:var(--fla)"></span>Saldo Flávio</div><div class="val" id="k-f">–</div><div class="delta" id="k-f-d">&nbsp;</div></div>
   </div>
-  <p class="mut">Atraso de 2 a 5 minutos. Cada termo conta uma vez por mensagem. Código em <a href="https://github.com/lnmeloni/debate-termos-2026" style="color:inherit">github.com/lnmeloni/debate-termos-2026</a>.</p>
+  <p class="mut">Mensagens por minuto e saldos são médias dos últimos 3 minutos completos; a seta compara com os 3 minutos anteriores.</p>
+
+  <section class="card">
+    <h2>Mensagens por minuto</h2>
+    <p class="mut">Total do chat e mensagens que citam cada candidato (nome, apelido, partido).</p>
+    <div class="chart"><canvas id="c" aria-label="Mensagens por minuto" role="img"></canvas></div>
+  </section>
+
+  <section class="card">
+    <h2>Sentimento por minuto</h2>
+    <p class="mut">Saldo de −1 (só ataque) a +1 (só apoio). Pontos são cada minuto; a linha é a média móvel de 3 minutos, ponderada pelo número de mensagens. Acima de zero, o chat apoia mais do que ataca.</p>
+    <div class="chart"><canvas id="s" aria-label="Sentimento por minuto" role="img"></canvas></div>
+  </section>
+
+  <div class="grid2">
+    <section class="card"><h2>Mais falados</h2><p class="mut" id="mais-lab">últimos 5 minutos</p><div class="rows" id="mais"></div></section>
+    <section class="card"><h2>Subindo</h2><p class="mut">quantas vezes mais frequente que no resto do debate</p><div class="rows" id="sub"></div></section>
+  </div>
+
+  <div class="notes">
+    <strong style="color:var(--fg2)">Como ler</strong>
+    <ul>
+      <li>O chat da Band não representa o eleitorado, só quem está ali comentando. Olhe a variação ao longo do debate, não o nível.</li>
+      <li>O sentimento vem de uma amostra de até 120 mensagens por minuto, classificada pelo Claude (haiku).</li>
+      <li>Atraso de 2 a 5 minutos. Cada termo conta uma vez por mensagem. A página se atualiza sozinha a cada 30 segundos.</li>
+      <li>Código em <a href="https://github.com/lnmeloni/debate-termos-2026">github.com/lnmeloni/debate-termos-2026</a>.</li>
+    </ul>
+  </div>
 </main>
 <script>
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const charts = {};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nf = new Intl.NumberFormat("pt-BR");
+const sgn = (x, d = 2) => { const a = Math.abs(x).toFixed(d); return (+a === 0 ? "" : x > 0 ? "+" : "−") + a.replace(".", ","); };
+const num = x => (x === "" || x === null || x === undefined || isNaN(+x)) ? null : +x;
+const INICIO = "20:05";
+let charts = {}, ultimo = { t: null, s: null };
+
 function base(yopts) {
-  return { maintainAspectRatio: false, animation: false,
+  return { maintainAspectRatio: false, responsive: true, animation: false,
     interaction: { mode: "index", intersect: false },
-    plugins: { legend: { position: "top", align: "start", labels: { color: css("--mut"), boxWidth: 12, boxHeight: 2 } } },
-    scales: { x: { ticks: { color: css("--mut"), maxTicksLimit: 12 }, grid: { display: false } },
-              y: Object.assign({ ticks: { color: css("--mut") }, grid: { color: css("--grid") } }, yopts) } };
+    plugins: {
+      legend: { position: "top", align: "start", labels: { color: css("--fg2"), boxWidth: 14, boxHeight: 3, padding: 14,
+        filter: it => !it.text.startsWith("_") } },
+      tooltip: { backgroundColor: css("--card"), titleColor: css("--fg"), bodyColor: css("--fg2"), borderColor: css("--line"),
+        borderWidth: 1, padding: 10, boxPadding: 4, usePointStyle: true, filter: it => !it.dataset.label.startsWith("_") || it.parsed.y !== null } },
+    scales: { x: { ticks: { color: css("--mut"), maxTicksLimit: 8, maxRotation: 0 }, grid: { display: false }, border: { color: css("--line") } },
+              y: Object.assign({ ticks: { color: css("--mut") }, grid: { color: css("--grid") }, border: { display: false } }, yopts) } };
 }
 function draw(id, labels, datasets, opts) {
-  if (!charts[id]) charts[id] = new Chart(document.getElementById(id), { type: "line", data: { labels, datasets }, options: opts });
+  if (!charts[id]) charts[id] = new Chart($(id), { type: "line", data: { labels, datasets }, options: opts });
   else { charts[id].data.labels = labels; charts[id].data.datasets.forEach((d, i) => d.data = datasets[i].data); charts[id].update(); }
 }
-const linha = (label, data, cor, extra) => Object.assign({ label, data, borderColor: cor, backgroundColor: cor, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25 }, extra || {});
-function linhas(el, rows, f) { document.getElementById(el).innerHTML = rows.map(f).join(""); }
+const linha = (label, data, cor, extra) => Object.assign({ label, data, borderColor: cor, backgroundColor: cor, borderWidth: 2,
+  pointRadius: 0, pointHoverRadius: 5, pointHoverBorderColor: css("--card"), pointHoverBorderWidth: 2, tension: 0.25 }, extra || {});
+
+// eixo de minutos comum aos dois gráficos
+function minutos(a, b) { const out = []; let [h, m] = a.split(":").map(Number);
+  while (true) { const s = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0"); if (s > b || out.length > 600) break; out.push(s); m++; if (m === 60) { m = 0; h++; } }
+  return out; }
+
+// média móvel de 3 min ponderada por n
+function mm3(vals, ns) { return vals.map((_, i) => { let s = 0, w = 0;
+  for (let j = Math.max(0, i - 2); j <= i; j++) if (vals[j] !== null && ns[j]) { s += vals[j] * ns[j]; w += ns[j]; }
+  return (w && vals[i] !== null) ? s / w : null; }); }
+
+function seta(d) { return Math.abs(d) < 0.005 ? "→" : d > 0 ? "▲" : "▼"; }
+
+function barras(el, rows, val, txt) {
+  const mx = Math.max(...rows.map(val), 1);
+  $(el).innerHTML = rows.map((r, i) => `<div class="row"><span class="i">${i + 1}</span>
+    <span class="t" title="${esc(r[0])}">${esc(r[0])}</span><span class="tr"><span class="b" style="display:block;width:${(val(r) / mx * 100).toFixed(1)}%"></span></span>
+    <span class="n">${txt(r)}</span></div>`).join("");
+}
+
+function render() {
+  const d = ultimo.t, s = ultimo.s;
+  let eixo = null;
+  if (d) {
+    $("meta").textContent = `${nf.format(d.n_total)} mensagens até ${d.janela.split("–")[1]} · atualizado às ${d.atualizado}`;
+    $("dot").classList.remove("off");
+    $("mais-lab").textContent = `janela ${d.janela} · ${nf.format(d.n_janela)} mensagens`;
+    barras("mais", d.mais, r => r[1], r => nf.format(r[1]));
+    barras("sub", d.subindo, r => r[2], r => `×${String(r[2]).replace(".", ",")} <small>(${r[1]})</small>`);
+    const serie = d.serie.filter(x => x[0] >= INICIO).slice(0, -1); // começa no debate; o último minuto ainda está incompleto
+    if (serie.length) {
+      eixo = minutos(INICIO, serie[serie.length - 1][0]);
+      const by = Object.fromEntries(serie.map(x => [x[0], x]));
+      const col = k => eixo.map(m => by[m] ? by[m][k] : null);
+      draw("c", eixo, [
+        linha("Total do chat", col(1), css("--tot"), { borderDash: [5, 3], borderWidth: 1.5 }),
+        linha("Citam Lula", col(2), css("--lula")),
+        linha("Citam Flávio", col(3), css("--fla")),
+      ], base({ beginAtZero: true, ticks: { color: css("--mut"), callback: v => nf.format(v) } }));
+      $("k-tot").textContent = nf.format(d.n_total);
+      const tot = serie.map(x => x[1]), ult = tot.slice(-3), ant = tot.slice(-6, -3);
+      const media = a => a.reduce((p, c) => p + c, 0) / a.length;
+      $("k-pm").textContent = nf.format(Math.round(media(ult)));
+      $("k-pm-d").textContent = ant.length ? `${seta(media(ult) - media(ant))} ${media(ult) >= media(ant) ? "+" : "−"}${nf.format(Math.abs(Math.round(media(ult) - media(ant))))} vs. 3 min antes` : " ";
+      $("k-tot-d").textContent = `desde ${INICIO} · último minuto ${serie[serie.length - 1][0]}`;
+    }
+  }
+  if (s) {
+    const sv = s.serie.filter(x => x[0] >= INICIO);
+    const fim = sv.length ? sv[sv.length - 1][0] : null;
+    if (!eixo && fim) eixo = minutos(INICIO, fim);
+    else if (eixo && fim && fim > eixo[eixo.length - 1]) eixo = minutos(INICIO, fim);
+    if (eixo) {
+      const by = Object.fromEntries(sv.map(x => [x[0], x]));
+      const v = k => eixo.map(m => by[m] ? num(by[m][k]) : null);
+      const n = k => eixo.map(m => by[m] ? (+by[m][k] || 0) : 0);
+      const L = v(1), F = v(2), nL = n(3), nF = n(4), mL = mm3(L, nL), mF = mm3(F, nF);
+      const o = base({ min: -1, max: 1,
+        ticks: { color: css("--mut"), stepSize: 0.5, callback: x => x === 0 ? "0" : sgn(x, 1) },
+        grid: { color: c => c.tick.value === 0 ? css("--mut") : css("--grid"), lineWidth: c => c.tick.value === 0 ? 1.5 : 1 } });
+      const ns = [nL, nF, nL, nF];
+      o.plugins.tooltip.callbacks = { label: c => {
+        if (c.parsed.y === null) return null;
+        const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
+        return c.datasetIndex < 2 ? `${nome}, média 3 min: ${sgn(c.parsed.y)}` : `${nome}, neste minuto: ${sgn(c.parsed.y)} (n=${ns[c.datasetIndex][c.dataIndex]})`; } };
+      draw("s", eixo, [
+        linha("Lula (média 3 min)", mL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
+        linha("Flávio (média 3 min)", mF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
+        linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
+        linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
+      ], o);
+      // KPI: média ponderada dos 3 últimos minutos com dado vs. 3 anteriores
+      const kpi = (vals, nn, el) => {
+        const idx = vals.map((x, i) => x !== null && nn[i] ? i : -1).filter(i => i >= 0);
+        const w = ix => { let a = 0, b = 0; ix.forEach(i => { a += vals[i] * nn[i]; b += nn[i]; }); return b ? a / b : null; };
+        const u = w(idx.slice(-3)), p = w(idx.slice(-6, -3));
+        $(el).textContent = u === null ? "–" : sgn(u);
+        $(el + "-d").textContent = (u !== null && p !== null) ? `${seta(u - p)} ${sgn(u - p)} vs. 3 min antes` : " ";
+      };
+      kpi(L, nL, "k-l"); kpi(F, nF, "k-f");
+    }
+  }
+}
 
 async function atualiza() {
-  try {
-    const d = await (await fetch("termos.json?t=" + Date.now())).json();
-    document.getElementById("meta").textContent = `${d.n_total} mensagens até ${d.janela.split("–")[1]} · publicado ${d.atualizado}`;
-    linhas("mais", d.mais, r => `<tr><td>${r[0]}</td><td class="n">${r[1]}</td></tr>`);
-    linhas("sub", d.subindo, r => `<tr><td>${r[0]}</td><td class="n">×${r[2]}</td></tr>`);
-    d.serie = d.serie.filter(s => s[0] >= "20:05").slice(0, -1); // começa no debate; o último minuto ainda está incompleto
-    draw("c", d.serie.map(s => s[0]), [
-      linha("Total", d.serie.map(s => s[1]), css("--tot"), { borderDash: [4, 3] }),
-      linha("Citam Lula", d.serie.map(s => s[2]), css("--lula")),
-      linha("Citam Flávio", d.serie.map(s => s[3]), css("--fla")),
-    ], base({ beginAtZero: true }));
-  } catch (e) { document.getElementById("meta").textContent = "aguardando dados…"; }
-  try {
-    const s = await (await fetch("sentimento.json?t=" + Date.now())).json();
-    const v = (x, i) => x[i] === "" ? null : x[i];
-    const o = base({ min: -1, max: 1, ticks: { color: css("--mut"), stepSize: 0.5 },
-      grid: { color: c => c.tick.value === 0 ? css("--mut") : css("--grid") } });
-    o.plugins.tooltip = { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(2)} (n=${s.serie[c.dataIndex][c.datasetIndex === 0 ? 3 : 4]})` } };
-    draw("s", s.serie.map(x => x[0]), [
-      linha("Lula", s.serie.map(x => v(x, 1)), css("--lula"), { pointRadius: 3, spanGaps: true }),
-      linha("Flávio", s.serie.map(x => v(x, 2)), css("--fla"), { pointRadius: 3, spanGaps: true }),
-    ], o);
-  } catch (e) {}
+  try { ultimo.t = await (await fetch("termos.json?t=" + Date.now())).json(); }
+  catch (e) { if (!ultimo.t) $("meta").textContent = "aguardando dados…"; }
+  try { ultimo.s = await (await fetch("sentimento.json?t=" + Date.now())).json(); } catch (e) {}
+  try { render(); } catch (e) { console.warn(e); }
 }
+// troca de tema: refaz os gráficos com as cores novas
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { Object.values(charts).forEach(c => c.destroy()); charts = {}; render(); });
 atualiza(); setInterval(atualiza, 30000);
 </script>
 </body>
