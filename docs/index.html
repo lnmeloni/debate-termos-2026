@@ -31,6 +31,9 @@
     <section><h2>Subindo · vs. resto do debate</h2><table id="sub"></table></section>
   </div>
   <div class="chart"><canvas id="c"></canvas></div>
+  <h2 style="margin-top:24px">Sentimento por minuto · saldo de −1 (só ataque) a +1 (só apoio)</h2>
+  <div class="mut">Classificação de uma amostra de até 120 mensagens por minuto que falam de cada candidato, feita pelo Claude (haiku). Reflete quem está no chat da Band, não o eleitorado.</div>
+  <div class="chart"><canvas id="s"></canvas></div>
   <div class="mut">Atraso de 2 a 4 minutos (coleta em blocos + publicação). O chat da live não representa as redes.</div>
 </main>
 <script>
@@ -51,6 +54,18 @@ async function atualiza() {
       options: { maintainAspectRatio: false, animation: false, elements: { point: { radius: 0 } } } });
     else { chart.data.labels = lab; chart.data.datasets.forEach((x, i) => x.data = ds[i].data); chart.update(); }
   } catch (e) { document.getElementById("meta").textContent = "aguardando dados…"; }
+  try {
+    const s = await (await fetch("sentimento.json?t=" + Date.now())).json();
+    const cs = getComputedStyle(document.documentElement);
+    const lab = s.serie.map(x => x[0]);
+    const ds = [
+      { label: "Lula", data: s.serie.map(x => x[1] === "" ? null : x[1]), borderColor: cs.getPropertyValue("--lula"), spanGaps: true },
+      { label: "Flávio", data: s.serie.map(x => x[2] === "" ? null : x[2]), borderColor: cs.getPropertyValue("--fla"), spanGaps: true },
+    ];
+    if (!window.sChart) window.sChart = new Chart(document.getElementById("s"), { type: "line", data: { labels: lab, datasets: ds },
+      options: { maintainAspectRatio: false, animation: false, scales: { y: { min: -1, max: 1 } } } });
+    else { sChart.data.labels = lab; sChart.data.datasets.forEach((x, i) => x.data = ds[i].data); sChart.update(); }
+  } catch (e) {}
 }
 atualiza(); setInterval(atualiza, 30000);
 </script>
