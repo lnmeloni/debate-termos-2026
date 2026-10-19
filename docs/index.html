@@ -145,11 +145,12 @@
 
   <section class="card" id="canais-sec">
     <h2>Por canal</h2>
-    <p class="mut">Saldo em cada live. Bolha do canal pelo acumulado: Lula − Flávio acima de +0,6 é pró-Lula, abaixo de −0,6 pró-Flávio, no meio dividida.</p>
+    <p class="mut">Saldo em cada live. A bolha vem do comportamento do próprio chat (Lula − Flávio acima de +0,6, pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividida) e fica fixa depois de 300 menções classificadas, para não reescrever o histórico.</p>
     <div class="leg"><span><i style="background:var(--lula)"></i>Lula</span><span><i style="background:var(--fla)"></i>Flávio</span></div>
     <div class="minis" id="minis"></div>
     <p class="mut" id="minis-oc" style="margin-top:8px"></p>
     <details class="dt"><summary>Tabela por canal (mensagens, ritmo, saldo médio e bolha)</summary>
+      <p class="mut" style="margin-top:8px">Mensagens desde 20:05; por minuto = média dos 3 últimos minutos fechados. "–" na bolha ou no saldo indica menos de 300 mensagens ou poucas menções classificadas.</p>
       <div class="tblw"><table class="tbl" id="canais-tbl"></table></div>
     </details>
   </section>
@@ -170,7 +171,7 @@
   <details class="card como">
     <summary><h2>Como é feito</h2></summary>
     <ul class="topicos">
-      <li><b>Coleta.</b> Um robô lê, mensagem a mensagem, o chat ao vivo de 18 transmissões do debate no YouTube com a ferramenta aberta yt-dlp e, desde 20h43, os posts em português do Bluesky que citam Lula, Flávio, Bolsonaro ou o debate. Cada canal começa quando a sua coleta começou: a Band por volta das 20h06, outros sete às 20h35, cinco às 20h52 (os reacts de direita de Max Cardoso, Eduardo Bisotto, Crente News e Foco Pátria, e o Portal VIU) e mais cinco por volta das 21h (Shimon Oliveira, Steffan, VazNaMinha Cast, The Bunker e the news cc).
+      <li><b>Coleta.</b> Um robô lê, mensagem a mensagem, o chat ao vivo de 18 transmissões do debate no YouTube com a ferramenta aberta yt-dlp e, desde 20h43, os posts em português do Bluesky que citam Lula, Flávio, Bolsonaro ou o debate. Cada canal começa quando a sua coleta começou: a Band por volta das 20h06, outros sete às 20h35, cinco às 20h52 (os reacts de direita de Max Cardoso, Eduardo Bisotto, Crente News e Foco Pátria, e o Portal VIU) e mais cinco por volta das 21h (Shimon Oliveira, Steffan, VazNaMinha Cast, The Bunker e the news cc). A CNN encerrou a live às 20h50.
         <div class="lc" id="lista-canais"></div></li>
       <li><b>Sentimento.</b> A cada minuto fechado, o robô sorteia até 120 mensagens (80 nos canais menores) que citam um candidato por nome, apelido, partido ou bolsonarismo, e o modelo Claude Haiku, da Anthropic, marca cada uma como favorável, desfavorável ou neutra para cada candidato. O saldo é (favoráveis − desfavoráveis) ÷ mensagens sobre o candidato, de −1 a +1.</li>
       <li><b>Bolhas.</b> Cada canal é classificado pelo próprio chat. Se, no acumulado, o saldo de Lula menos o de Flávio passa de +0,6, o canal é pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividido.</li>
@@ -263,12 +264,6 @@ function render0() {
         linha("Citam Lula", col(2), css("--lula")),
         linha("Citam Flávio", col(3), css("--fla")),
       ], base({ beginAtZero: true, ticks: { color: css("--mut"), callback: v => nf.format(v) } }));
-      $("k-tot").textContent = nf.format(d.n_total);
-      const tot = serie.map(x => x[1]), ult = tot.slice(-3), ant = tot.slice(-6, -3);
-      const media = a => a.reduce((p, c) => p + c, 0) / a.length;
-      $("k-pm").textContent = nf.format(Math.round(media(ult)));
-      $("k-pm-d").textContent = ant.length ? `${seta(media(ult) - media(ant))} ${media(ult) >= media(ant) ? "+" : "−"}${nf.format(Math.abs(Math.round(media(ult) - media(ant))))} vs. 3 min antes` : " ";
-      $("k-tot-d").textContent = `desde ${INICIO} · último minuto ${serie[serie.length - 1][0]}`;
     }
   }
   if (s) {
@@ -310,7 +305,7 @@ function render0() {
 
 function renderEq() {
   const c = ultimo.c; if (!c || !Array.isArray(c.equilibrado) || !c.equilibrado.length) return;
-  const q = c.equilibrado.filter(x => x[0] >= INICIO);
+  const q = c.equilibrado.filter(x => x[0] >= INICIO).slice(0, -1); // o último minuto ainda está aberto
   if (!q.length) return;
   let fim = EIXO ? EIXO[EIXO.length - 1] : INICIO; if (q[q.length - 1][0] > fim) fim = q[q.length - 1][0];
   const eixo = minutos(INICIO, fim);
@@ -395,8 +390,12 @@ function renderEq() {
   const ult = q[q.length - 1];
   $("eq-bolhas").textContent = `Bolhas no último minuto (${ult[0]}): ${(Array.isArray(ult[5]) && ult[5].length) ? ult[5].join(", ") : "nenhuma"}. A lista de cada minuto aparece ao passar o mouse.`;
   $("eq-bolhas").title = mud.length > 1 ? "Composição ao longo do debate: " + mud.join(" → ") : "";
+  // minuto completo: tem dado e não tem menos bolhas que o máximo dos 10 minutos anteriores
+  const nb = eixo.map((m, i) => by[m] ? bol[i].length : null);
+  const completo = eixo.map((m, i) => { if (nb[i] === null) return false; let mx = 0;
+    for (let j = Math.max(0, i - 10); j < i; j++) if (nb[j] !== null && nb[j] > mx) mx = nb[j]; return nb[i] >= mx; });
   const kpi = (vals, h, dd, el) => {
-    const idx = vals.map((x, i) => x !== null ? i : -1).filter(i => i >= 0);
+    const idx = vals.map((x, i) => x !== null && completo[i] ? i : -1).filter(i => i >= 0);
     const m = ix => ix.length ? ix.reduce((a, i) => a + vals[i], 0) / ix.length : null;
     const u = m(idx.slice(-3)), p = m(idx.slice(-6, -3));
     const i3 = idx.slice(-3), hs = i3.length && i3.every(i => h[i] !== null) ? Math.sqrt(i3.reduce((a, i) => a + h[i] * h[i], 0)) / i3.length : null;
@@ -420,21 +419,32 @@ function renderCanais() {
     const se = (k.serie || []).filter(x => x[0] >= INICIO);
     const by = Object.fromEntries(se.map(x => [x[0], x]));
     // por minuto agora: 3 minutos antes do último minuto do canal (que ainda está incompleto)
-    const ult3 = se.length ? [1, 2, 3].map(dd => menos(se[se.length - 1][0], dd)) : [];
-    const pm = ult3.length ? ult3.reduce((a, m) => a + (by[m] ? +by[m][1] || 0 : 0), 0) / 3 : null;
+    const janela = (a, b) => se.length ? [...Array(b - a + 1).keys()].map(x => menos(se[se.length - 1][0], a + x)) : [];
+    const media3 = ms => ms.length ? ms.reduce((acc, m) => acc + (by[m] ? +by[m][1] || 0 : 0), 0) / 3 : null;
+    const pm = media3(janela(1, 3)), pmAnt = media3(janela(4, 6));
+    const tot = se.reduce((a, x) => a + (+x[1] || 0), 0); // total desde 20:05
     const med = (iv, in_) => { let a = 0, b = 0; se.forEach(x => { const v = num(x[iv]), n = +x[in_] || 0; if (v !== null && n) { a += v * n; b += n; } }); return b ? a / b : null; };
     const nmin = se.filter(x => (num(x[2]) !== null && +x[4]) || (num(x[3]) !== null && +x[5])).length;
     const ultMin = se.length ? se[se.length - 1][0] : null;
     const parado = ultMin && agoraMin && (seg(agoraMin + ":00") - seg(ultMin + ":00") + 86400) % 86400 > 300 ? ultMin : null;
-    return { k, se, by, pm: parado ? 0 : pm, L: med(2, 4), F: med(3, 5), nmin, parado };
-  }).sort((a, b) => (b.k.n_total || 0) - (a.k.n_total || 0));
+    return { k, se, by, pm: parado ? 0 : pm, pmAnt, tot, ultFech: se.length > 1 ? se[se.length - 2][0] : null, L: med(2, 4), F: med(3, 5), nmin, parado };
+  }).sort((a, b) => b.tot - a.tot);
+  // cartões da Band: mesma fonte e mesma definição da tabela
+  const band = linhas.find(r => r.k.nome === "band_2026-10-18");
+  if (band) {
+    $("k-tot").textContent = nf.format(band.tot);
+    $("k-tot-d").textContent = `desde ${INICIO}${band.ultFech ? " · último minuto fechado " + band.ultFech : ""}`;
+    $("k-pm").textContent = band.pm === null ? "–" : nf.format(Math.round(band.pm));
+    const dv = band.pm !== null && band.pmAnt !== null && !band.parado ? band.pm - band.pmAnt : null;
+    $("k-pm-d").textContent = dv === null ? (band.parado ? `sem mensagens desde ${band.parado}` : "\u00a0") : `${seta(dv)} ${dv >= 0 ? "+" : "−"}${nf.format(Math.abs(Math.round(dv)))} vs. 3 min antes · média de 3 min fechados`;
+  }
   const f = x => x === null ? "–" : sgn(x);
   $("lista-canais").innerHTML = c.canais.map(k => `<a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.rotulo || k.nome)}</a>`).join(" ");
   $("canais-tbl").innerHTML = `<thead><tr><th>Canal</th><th><span class="lg">Mensagens</span><span class="sm">Msgs</span></th><th><span class="lg">Por min agora</span><span class="sm">/min</span></th><th><span class="sw" style="background:var(--lula)"></span>Lula</th><th><span class="sw" style="background:var(--fla)"></span>Flávio</th><th class="bc">Bolha</th></tr></thead><tbody>` +
-    linhas.map(r => `<tr><td><a href="${esc(r.k.url)}" target="_blank" rel="noopener">${esc(r.k.rotulo || r.k.nome)}</a>${r.parado ? ` <span class="tag tp">sem mensagens desde ${r.parado}</span>` : ""}${r.k.bolha ? ` <span class="tag bm">${esc(r.k.bolha)}</span>` : ""}</td><td>${nf.format(r.k.n_total || 0)}</td><td>${r.pm === null ? "–" : nf.format(Math.round(r.pm))}</td><td>${f(r.L)}</td><td>${f(r.F)}</td><td class="bc">${r.k.bolha ? `<span class="tag" title="Lula − Flávio no canal: ${r.k.lean === null || r.k.lean === undefined ? "–" : sgn(+r.k.lean)}">${esc(r.k.bolha)}</span>` : '<span class="mut2">–</span>'}</td></tr>`).join("") + "</tbody>";
+    linhas.map(r => `<tr><td><a href="${esc(r.k.url)}" target="_blank" rel="noopener">${esc(r.k.rotulo || r.k.nome)}</a>${r.parado ? ` <span class="tag tp">sem mensagens desde ${r.parado}</span>` : ""}${r.k.bolha ? ` <span class="tag bm">${esc(r.k.bolha)}</span>` : ""}</td><td>${nf.format(r.tot)}</td><td>${r.pm === null ? "–" : nf.format(Math.round(r.pm))}</td><td>${f(r.L)}</td><td>${f(r.F)}</td><td class="bc">${r.k.bolha ? `<span class="tag" title="Lula − Flávio no canal: ${r.k.lean === null || r.k.lean === undefined ? "–" : sgn(+r.k.lean)}">${esc(r.k.bolha)}</span>` : '<span class="mut2">–</span>'}</td></tr>`).join("") + "</tbody>";
   // small multiples
   const MINMSG = 300;
-  const vis = linhas.filter(r => r.nmin >= 3 && (r.k.n_total || 0) >= MINMSG), oc = linhas.filter(r => !vis.includes(r));
+  const vis = linhas.filter(r => r.nmin >= 3 && r.tot >= MINMSG), oc = linhas.filter(r => !vis.includes(r));
   $("minis-oc").textContent = oc.length ? `Sem minigráfico, por terem menos de ${MINMSG} mensagens ou menos de 3 minutos de sentimento classificado: ${oc.map(r => r.k.rotulo || r.k.nome).join(", ")}.` : "";
   let fim = EIXO ? EIXO[EIXO.length - 1] : INICIO;
   vis.forEach(r => { const u = r.se.length ? r.se[r.se.length - 1][0] : fim; if (u > fim) fim = u; });
