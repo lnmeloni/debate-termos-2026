@@ -37,7 +37,7 @@
   .kpi .val { font-size:28px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.15; margin-top:4px; }
   .kpi .delta { font-size:12px; color:var(--fg2); font-variant-numeric:tabular-nums; margin-top:2px; }
   .sw { width:10px; height:10px; border-radius:2px; display:inline-block; flex:none; }
-  section.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:16px; min-width:0; }
+  section.card, details.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:16px; min-width:0; }
   h2 { font-size:16px; margin:0 0 2px; }
   .mut { color:var(--mut); font-size:13px; margin:0; }
   .chart { position:relative; height:280px; margin-top:12px; }
@@ -65,6 +65,9 @@
   .notes li { margin:3px 0; }
   a { color:inherit; }
   .mut2 { color:var(--mut); }
+  .kpi .pm { font-size:14px; font-weight:400; color:var(--mut); margin-left:4px; }
+  .kpi .tie { vertical-align:middle; font-weight:400; position:relative; top:-3px; }
+  [hidden] { display:none !important; }
   .h3s { font-size:14px; margin:20px 0 2px; }
   .chart.sm { height:190px; }
   .tag { display:inline-block; font-size:11px; line-height:1.5; padding:0 6px; border:1px solid var(--line); border-radius:999px; color:var(--fg2); white-space:nowrap; }
@@ -86,87 +89,88 @@
   .mini .mc { position:relative; height:140px; margin-top:4px; }
   .leg { display:flex; gap:14px; font-size:12px; color:var(--fg2); margin-top:10px; align-items:center; flex-wrap:wrap; }
   .leg i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:5px; }
+  .aviso { margin:10px 0 0; font-size:13px; color:var(--fg2); border-left:3px solid var(--line); padding:2px 0 2px 10px; }
+  details.dt { margin-top:12px; }
+  details summary { cursor:pointer; color:var(--fg2); font-size:14px; }
+  details.como summary { list-style:none; display:flex; align-items:center; gap:8px; }
+  details.como summary::-webkit-details-marker { display:none; }
+  details.como summary h2 { display:inline; margin:0; }
+  details.como summary::after { content:"mostrar"; font-size:12px; color:var(--mut); border:1px solid var(--line); border-radius:999px; padding:0 8px; }
+  details.como[open] summary::after { content:"esconder"; }
+  .topicos { margin:12px 0 0; padding-left:18px; font-size:14px; color:var(--fg2); }
+  .topicos li { margin:6px 0; }
+  .topicos b { color:var(--fg); }
+  .lc { font-size:13px; margin-top:4px; }
+  .lc a { margin-right:10px; white-space:nowrap; }
+  .leg { margin-top:8px; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>O chat do debate, minuto a minuto</h1>
-    <p class="sub">Lula × Flávio Bolsonaro · debate da Band · 18/10/2026 · os gráficos gerais usam o chat da live da Band Jornalismo; a seção “Por canal” compara 13 lives do YouTube e o Bluesky</p>
+    <p class="sub">Lula × Flávio Bolsonaro · debate da Band · 18/10/2026 · 18 lives do YouTube e o Bluesky</p>
     <div class="meta"><span class="dot off" id="dot"></span><span id="meta">carregando…</span></div>
+    <p class="aviso">O chat não é o eleitorado. Cada live tem a sua torcida, então vale olhar a variação ao longo do debate, não o nível.</p>
   </header>
 
   <div class="kpis">
-    <div class="kpi"><div class="lab">Mensagens no total</div><div class="val" id="k-tot">–</div><div class="delta" id="k-tot-d">&nbsp;</div></div>
-    <div class="kpi"><div class="lab">Mensagens por minuto agora</div><div class="val" id="k-pm">–</div><div class="delta" id="k-pm-d">&nbsp;</div></div>
-    <div class="kpi"><div class="lab"><span class="sw" style="background:var(--lula)"></span>Saldo Lula · equilibrado</div><div class="val" id="k-l">–</div><div class="delta" id="k-l-d">&nbsp;</div><div class="delta mut2" id="k-l-b">&nbsp;</div></div>
-    <div class="kpi"><div class="lab"><span class="sw" style="background:var(--fla)"></span>Saldo Flávio · equilibrado</div><div class="val" id="k-f">–</div><div class="delta" id="k-f-d">&nbsp;</div><div class="delta mut2" id="k-f-b">&nbsp;</div></div>
+    <div class="kpi"><div class="lab"><span class="sw" style="background:var(--lula)"></span>Saldo Lula · equilibrado</div><div class="val"><span id="k-l">–</span><span class="pm" id="k-l-pm"></span> <span class="tag tie" id="k-l-t" hidden>empate técnico</span></div><div class="delta" id="k-l-d">&nbsp;</div><div class="delta mut2" id="k-l-b">&nbsp;</div></div>
+    <div class="kpi"><div class="lab"><span class="sw" style="background:var(--fla)"></span>Saldo Flávio · equilibrado</div><div class="val"><span id="k-f">–</span><span class="pm" id="k-f-pm"></span> <span class="tag tie" id="k-f-t" hidden>empate técnico</span></div><div class="delta" id="k-f-d">&nbsp;</div><div class="delta mut2" id="k-f-b">&nbsp;</div></div>
+    <div class="kpi"><div class="lab">Mensagens no chat da Band</div><div class="val" id="k-tot">–</div><div class="delta" id="k-tot-d">&nbsp;</div></div>
+    <div class="kpi"><div class="lab">Por minuto na Band, agora</div><div class="val" id="k-pm">–</div><div class="delta" id="k-pm-d">&nbsp;</div></div>
   </div>
-  <p class="mut">Mensagens por minuto e saldos são médias dos últimos 3 minutos completos; a seta compara com os 3 minutos anteriores. Os saldos usam o índice equilibrado por bolha; a linha de baixo mostra o saldo só no chat da Band.</p>
 
   <section class="card">
     <h2>Índice equilibrado por bolha</h2>
-    <p class="mut">É o mesmo saldo de −1 a +1, mas cada bolha (pró-Lula, pró-Flávio, dividida) pesa igual, para o chat maior não decidir sozinho. A bolha de cada canal é definida pelo próprio comportamento do chat ao longo do debate. Cada ponto é um minuto; a linha é a média móvel de 3 minutos.</p>
+    <p class="mut">Saldo de −1 a +1 com peso igual para cada bolha de chat. Linha é a média de 3 min; faixa é o intervalo de 95%, e faixas cruzadas indicam empate técnico.</p>
     <div class="chart"><canvas id="e" aria-label="Índice equilibrado por bolha" role="img"></canvas></div>
     <p class="mut" id="eq-bolhas" style="margin-top:8px"></p>
     <h3 class="h3s">Mensagens favoráveis (%)</h3>
-    <p class="mut">Parte das mensagens sobre cada candidato que são favoráveis a ele, com o mesmo peso por bolha. É a métrica que empresas de monitoramento como a AP Exata publicam; fica aqui para comparação.</p>
+    <p class="mut">Mesmo peso por bolha. É a métrica que empresas como a AP Exata publicam, para comparação.</p>
     <div class="chart sm"><canvas id="p" aria-label="Percentual de mensagens favoráveis" role="img"></canvas></div>
-  </section>
-
-  <section class="card">
-    <h2>Mensagens por minuto</h2>
-    <p class="mut">Total do chat e mensagens que citam cada candidato (nome, apelido, partido).</p>
-    <div class="chart"><canvas id="c" aria-label="Mensagens por minuto" role="img"></canvas></div>
-  </section>
-
-  <section class="card">
-    <h2>Sentimento por minuto</h2>
-    <p class="mut">Saldo de −1 (só ataque) a +1 (só apoio). Cada ponto é um minuto; a linha é a média móvel de 3 minutos, ponderada pelo número de mensagens. Acima de zero, o chat apoia mais do que ataca.</p>
-    <div class="chart"><canvas id="s" aria-label="Sentimento por minuto" role="img"></canvas></div>
   </section>
 
   <section class="card" id="canais-sec">
     <h2>Por canal</h2>
-    <p class="mut">Cada chat tem a sua audiência (há canais de react e de análise), então a comparação é entre bolhas, e nenhuma delas representa o eleitorado. Saldo médio ponderado pelo número de mensagens classificadas, só nos minutos com dado.</p>
-    <div class="tblw"><table class="tbl" id="canais-tbl"></table></div>
-    <div class="leg"><span><i style="background:var(--lula)"></i>Lula</span><span><i style="background:var(--fla)"></i>Flávio</span><span class="mut" style="font-size:12px">linha = média móvel de 3 min · pontos = cada minuto</span></div>
+    <p class="mut">Saldo em cada live; cada chat é uma bolha diferente.</p>
+    <div class="leg"><span><i style="background:var(--lula)"></i>Lula</span><span><i style="background:var(--fla)"></i>Flávio</span></div>
     <div class="minis" id="minis"></div>
     <p class="mut" id="minis-oc" style="margin-top:8px"></p>
+    <details class="dt"><summary>Tabela por canal (mensagens, ritmo, saldo médio e bolha)</summary>
+      <div class="tblw"><table class="tbl" id="canais-tbl"></table></div>
+    </details>
   </section>
 
-  <div class="grid2">
-    <section class="card"><h2>Mais falados</h2><p class="mut" id="mais-lab">últimos 5 minutos</p><div class="rows" id="mais"></div></section>
-    <section class="card"><h2>Subindo</h2><p class="mut">quantas vezes mais frequente que no resto do debate</p><div class="rows" id="sub"></div></section>
-  </div>
-
-  <section class="card como">
-    <h2>Como é feito</h2>
-    <div class="passos">
-      <div><h3>1. Coleta</h3>
-        <p>Um robô lê o chat ao vivo de 13 transmissões do debate no YouTube (8 desde o começo e 5 acrescentadas às 20h52, entre reacts e outros canais), mensagem a mensagem, usando a ferramenta aberta yt-dlp. Desde 20h43 também lê o fluxo público do Bluesky (Jetstream), guardando os posts em português que citam Lula, Flávio, Bolsonaro ou o debate. Os dados de cada canal começam quando a coleta dele começou. A da Band, por volta das 20h06; a de outros sete, por volta das 20h35; a dos cinco acrescentados, às 20h52.</p>
-        <ul id="lista-canais" class="lc"></ul></div>
-      <div><h3>2. Termos</h3>
-        <p>Cada mensagem é quebrada em palavras e pares de palavras, sem as palavras vazias (artigos, preposições e afins). Um termo conta uma vez por mensagem, mesmo que apareça repetido.</p>
-        <p>"Mais falados" são os termos dos últimos 5 minutos. "Subindo" é a frequência nos últimos 5 minutos dividida pela frequência no resto do debate.</p></div>
-      <div><h3>3. Sentimento</h3>
-        <p>A cada minuto fechado, o robô sorteia até 120 mensagens (80 nos canais menores) que citam um dos candidatos pelo nome, apelido, partido ou por bolsonarismo. O modelo Claude Haiku, da Anthropic, marca cada uma como favorável, desfavorável ou neutra para cada candidato.</p>
-        <p>O saldo é (favoráveis − desfavoráveis) ÷ mensagens que falam do candidato, e vai de −1 a +1. A linha dos gráficos é a média dos últimos 3 minutos.</p></div>
-      <div><h3>Ajuste por bolha</h3>
-        <p>Cada chat tem a sua torcida. O da Band, por exemplo, é pró-Lula. Por isso cada canal é classificado pelo próprio comportamento. Se, no acumulado, o saldo de Lula menos o de Flávio passa de +0,6, o canal é pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividido. O índice equilibrado faz a média dentro de cada bolha e depois dá peso igual a cada uma.</p>
-        <p>Só às 20h52 entraram cinco lives novas: os reacts de direita de Max Cardoso, Eduardo Bisotto, Crente News e Foco Pátria, e o Portal VIU. Antes disso, o índice depende de poucas bolhas.</p></div>
-      <div><h3>4. Limites</h3>
-        <ul>
-          <li>Chat não é eleitorado, e cada live tem a sua bolha. Faz mais sentido olhar a variação ao longo do debate do que o nível.</li>
-          <li>Ironia e torcida organizada existem, e o modelo pode se confundir com elas.</li>
-          <li>Minutos com poucas mensagens oscilam muito. Passe o mouse num ponto para ver quantas entraram (n).</li>
-          <li>Os dados chegam com 2 a 5 minutos de atraso. A página se atualiza sozinha a cada 30 segundos.</li>
-          <li>Só números agregados são publicados, nenhum nome de usuário nem mensagem.</li>
-        </ul></div>
-      <div><h3>5. Código aberto</h3>
-        <p>Todo o código está em <a href="https://github.com/lnmeloni/debate-termos-2026">github.com/lnmeloni/debate-termos-2026</a>.</p></div>
+  <section class="card">
+    <h2>Só a Band</h2>
+    <p class="mut">O chat da live da Band Jornalismo, o primeiro coletado (desde cerca de 20h06).</p>
+    <h3 class="h3s">Mensagens por minuto</h3>
+    <div class="chart"><canvas id="c" aria-label="Mensagens por minuto na Band" role="img"></canvas></div>
+    <h3 class="h3s">Sentimento por minuto</h3>
+    <div class="chart"><canvas id="s" aria-label="Sentimento por minuto na Band" role="img"></canvas></div>
+    <div class="grid2">
+      <div><h3 class="h3s">Mais falados</h3><p class="mut" id="mais-lab">últimos 5 minutos</p><div class="rows" id="mais"></div></div>
+      <div><h3 class="h3s">Subindo</h3><p class="mut">vezes mais frequente que no resto do debate</p><div class="rows" id="sub"></div></div>
     </div>
   </section>
+
+  <details class="card como">
+    <summary><h2>Como é feito</h2></summary>
+    <ul class="topicos">
+      <li><b>Coleta.</b> Um robô lê, mensagem a mensagem, o chat ao vivo de 18 transmissões do debate no YouTube com a ferramenta aberta yt-dlp e, desde 20h43, os posts em português do Bluesky que citam Lula, Flávio, Bolsonaro ou o debate. Cada canal começa quando a sua coleta começou: a Band por volta das 20h06, outros sete às 20h35, cinco às 20h52 (os reacts de direita de Max Cardoso, Eduardo Bisotto, Crente News e Foco Pátria, e o Portal VIU) e mais cinco por volta das 21h (Shimon Oliveira, Steffan, VazNaMinha Cast, The Bunker e the news cc).
+        <div class="lc" id="lista-canais"></div></li>
+      <li><b>Sentimento.</b> A cada minuto fechado, o robô sorteia até 120 mensagens (80 nos canais menores) que citam um candidato por nome, apelido, partido ou bolsonarismo, e o modelo Claude Haiku, da Anthropic, marca cada uma como favorável, desfavorável ou neutra para cada candidato. O saldo é (favoráveis − desfavoráveis) ÷ mensagens sobre o candidato, de −1 a +1.</li>
+      <li><b>Bolhas.</b> Cada canal é classificado pelo próprio chat. Se, no acumulado, o saldo de Lula menos o de Flávio passa de +0,6, o canal é pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividido.</li>
+      <li><b>Índice equilibrado.</b> Média ponderada pelo número de mensagens dentro de cada bolha, depois média simples entre as bolhas, para o chat maior não decidir sozinho. Antes das 20h52 ele depende de poucas bolhas.</li>
+      <li><b>Faixa.</b> Intervalo de 95% calculado do tamanho da amostra de cada bolha. Não cobre erro do classificador.</li>
+      <li><b>Cartões e tabela.</b> Os cartões mostram médias dos últimos 3 minutos completos, e a seta compara com os 3 anteriores. Na tabela, o saldo médio do canal é ponderado pelo número de mensagens, só nos minutos com dado.</li>
+      <li><b>Termos.</b> Cada mensagem vira palavras e pares de palavras, sem palavras vazias, e cada termo conta uma vez por mensagem. "Subindo" é a frequência nos últimos 5 minutos dividida pela do resto do debate.</li>
+      <li><b>Limites.</b> O chat não é o eleitorado, e cada live tem a sua bolha. Ironia e torcida organizada podem enganar o modelo, e minutos com poucas mensagens oscilam muito (o n aparece ao passar o mouse). Os dados chegam com 2 a 5 minutos de atraso, e a página se atualiza a cada 30 segundos.</li>
+      <li><b>Privacidade.</b> Só números agregados são publicados, nenhum nome de usuário nem mensagem.</li>
+      <li><b>Código aberto</b> em <a href="https://github.com/lnmeloni/debate-termos-2026">github.com/lnmeloni/debate-termos-2026</a>.</li>
+    </ul>
+  </details>
 </main>
 <script>
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -183,9 +187,9 @@ function base(yopts) {
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { position: "top", align: "start", labels: { color: css("--fg2"), boxWidth: 14, boxHeight: 3, padding: 14,
-        filter: it => !it.text.startsWith("_") } },
+        filter: it => !/^[_~]/.test(it.text) } },
       tooltip: { backgroundColor: css("--card"), titleColor: css("--fg"), bodyColor: css("--fg2"), borderColor: css("--line"),
-        borderWidth: 1, padding: 10, boxPadding: 4, usePointStyle: true, filter: it => !it.dataset.label.startsWith("_") || it.parsed.y !== null } },
+        borderWidth: 1, padding: 10, boxPadding: 4, usePointStyle: true, filter: it => !it.dataset.label.startsWith("~") && (!it.dataset.label.startsWith("_") || it.parsed.y !== null) } },
     scales: { x: { ticks: { color: css("--mut"), maxTicksLimit: 8, maxRotation: 0 }, grid: { display: false }, border: { color: css("--line") } },
               y: Object.assign({ ticks: { color: css("--mut") }, grid: { color: css("--grid") }, border: { display: false } }, yopts) } };
 }
@@ -220,7 +224,7 @@ function render0() {
   const d = ultimo.t, s = ultimo.s;
   let eixo = null;
   if (d) {
-    $("meta").textContent = `${nf.format(d.n_total)} mensagens até ${d.janela.split("–")[1]} · atualizado às ${d.atualizado}`;
+    $("meta").textContent = `ao vivo · atualizado às ${d.atualizado}`;
     $("dot").classList.remove("off");
     $("mais-lab").textContent = `janela ${d.janela} · ${nf.format(d.n_janela)} mensagens`;
     barras("mais", d.mais, r => r[1], r => nf.format(r[1]));
@@ -291,6 +295,19 @@ function renderEq() {
   const bol = eixo.map(m => by[m] && Array.isArray(by[m][5]) ? by[m][5] : []);
   const L = v(1), F = v(2), um = eixo.map(() => 1);
   const pL = v(3).map(x => x === null ? null : x * 100), pF = v(4).map(x => x === null ? null : x * 100);
+  // meia-largura do IC 95%: por minuto e para a média móvel de 3 min (raiz da soma dos quadrados / k)
+  const ic = k => eixo.map(m => by[m] ? num(by[m][k]) : null);
+  const icMM = (vals, h) => vals.map((_, i) => { if (vals[i] === null) return null; let s2 = 0, k = 0;
+    for (let j = Math.max(0, i - 2); j <= i; j++) if (vals[j] !== null) { if (h[j] === null) return null; s2 += h[j] * h[j]; k++; }
+    return k ? Math.sqrt(s2) / k : null; });
+  const faixa = (mm, h, lo, hi, escala) => { const hw = icMM(mm.raw, h);
+    return [mm.line.map((y, i) => y === null || hw[i] === null ? null : Math.min(hi, y + hw[i] * escala)),
+            mm.line.map((y, i) => y === null || hw[i] === null ? null : Math.max(lo, y - hw[i] * escala))]; };
+  const banda = (lbl, cor, up, dn) => [
+    linha("~" + lbl, up, cor, { spanGaps: true, borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.25 }),
+    linha("~" + lbl, dn, cor, { spanGaps: true, borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.25, fill: "-1", backgroundColor: cor + "26" }) ];
+  const icL = ic(6), icF = ic(7), icPL = ic(8), icPF = ic(9);
+  const mL = mm3(L, um), mF = mm3(F, um);
   const rodape = items => { const b = items.length ? bol[items[0].dataIndex] : []; return b.length ? "Bolhas: " + b.join(", ") : ""; };
   const o = base({ min: -1, max: 1,
     ticks: { color: css("--mut"), stepSize: 0.5, callback: x => x === 0 ? "0" : sgn(x, 1) },
@@ -300,30 +317,45 @@ function renderEq() {
     const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
     return c.datasetIndex < 2 ? `${nome}, média 3 min: ${sgn(c.parsed.y)}` : `${nome}, neste minuto: ${sgn(c.parsed.y)}`; } };
   draw("e", eixo, [
-    linha("Lula (média 3 min)", mm3(L, um), css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
-    linha("Flávio (média 3 min)", mm3(F, um), css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("Lula (média 3 min)", mL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("Flávio (média 3 min)", mF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
     linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
     linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
+    ...banda("Lula", css("--lula"), ...faixa({ line: mL, raw: L }, icL, -1, 1, 1)),
+    ...banda("Flávio", css("--fla"), ...faixa({ line: mF, raw: F }, icF, -1, 1, 1)),
   ], o);
   const op = base({ min: 0, max: 100, ticks: { color: css("--mut"), stepSize: 25, callback: x => x + "%" } });
   op.plugins.tooltip.footerColor = css("--mut"); op.plugins.tooltip.footerFont = { weight: "normal", size: 11 };
-  op.plugins.tooltip.callbacks = { footer: rodape, label: c => c.parsed.y === null ? null : `${c.dataset.label}: ${Math.round(c.parsed.y)}% favoráveis` };
+  const mpL = mm3(pL, um), mpF = mm3(pF, um);
+  op.plugins.tooltip.callbacks = { footer: rodape, label: c => { if (c.parsed.y === null) return null;
+    const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
+    return `${nome}, ${c.datasetIndex < 2 ? "média 3 min" : "neste minuto"}: ${Math.round(c.parsed.y)}% favoráveis`; } };
   draw("p", eixo, [
-    linha("Lula", pL, css("--lula"), { spanGaps: true, pointRadius: 2 }),
-    linha("Flávio", pF, css("--fla"), { spanGaps: true, pointRadius: 2 }),
+    linha("Lula (média 3 min)", mpL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("Flávio (média 3 min)", mpF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("_Lula", pL, css("--lula") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
+    linha("_Flávio", pF, css("--fla") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
+    ...banda("Lula", css("--lula"), ...faixa({ line: mpL, raw: pL }, icPL, 0, 100, 100)),
+    ...banda("Flávio", css("--fla"), ...faixa({ line: mpF, raw: pF }, icPF, 0, 100, 100)),
   ], op);
   const mud = []; let ant = null;
   eixo.forEach((m, i) => { if (!by[m]) return; const k = bol[i].join(", "); if (k !== ant) { mud.push(`${m} ${k || "nenhuma"}`); ant = k; } });
   const ult = q[q.length - 1];
-  $("eq-bolhas").textContent = `Bolhas no último minuto (${ult[0]}): ${(Array.isArray(ult[5]) && ult[5].length) ? ult[5].join(", ") : "nenhuma"}.` + (mud.length > 1 ? ` Composição ao longo do debate: ${mud.join(" → ")}.` : "");
-  const kpi = (vals, el) => {
+  $("eq-bolhas").textContent = `Bolhas no último minuto (${ult[0]}): ${(Array.isArray(ult[5]) && ult[5].length) ? ult[5].join(", ") : "nenhuma"}. A lista de cada minuto aparece ao passar o mouse.`;
+  $("eq-bolhas").title = mud.length > 1 ? "Composição ao longo do debate: " + mud.join(" → ") : "";
+  const kpi = (vals, h, el) => {
     const idx = vals.map((x, i) => x !== null ? i : -1).filter(i => i >= 0);
     const m = ix => ix.length ? ix.reduce((a, i) => a + vals[i], 0) / ix.length : null;
     const u = m(idx.slice(-3)), p = m(idx.slice(-6, -3));
+    const i3 = idx.slice(-3), hw = i3.length && i3.every(i => h[i] !== null) ? Math.sqrt(i3.reduce((a, i) => a + h[i] * h[i], 0)) / i3.length : null;
     $(el).textContent = u === null ? "–" : sgn(u);
+    $(el + "-pm").textContent = (u !== null && hw !== null) ? `± ${hw.toFixed(2).replace(".", ",")}` : "";
     $(el + "-d").textContent = (u !== null && p !== null) ? `${seta(u - p)} ${sgn(u - p)} vs. 3 min antes` : "\u00a0";
+    return u === null ? null : { u, hw };
   };
-  kpi(L, "k-l"); kpi(F, "k-f");
+  const kl = kpi(L, icL, "k-l"), kf = kpi(F, icF, "k-f");
+  const empate = kl && kf && kl.hw !== null && kf.hw !== null && kl.u - kl.hw <= kf.u + kf.hw && kf.u - kf.hw <= kl.u + kl.hw;
+  $("k-l-t").hidden = $("k-f-t").hidden = !empate;
 }
 
 function renderCanais() {
@@ -341,7 +373,7 @@ function renderCanais() {
     return { k, se, by, pm, L: med(2, 4), F: med(3, 5), nmin };
   }).sort((a, b) => (b.k.n_total || 0) - (a.k.n_total || 0));
   const f = x => x === null ? "–" : sgn(x);
-  $("lista-canais").innerHTML = c.canais.map(k => `<li><a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.rotulo || k.nome)}</a></li>`).join("");
+  $("lista-canais").innerHTML = c.canais.map(k => `<a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.rotulo || k.nome)}</a>`).join(" ");
   $("canais-tbl").innerHTML = `<thead><tr><th>Canal</th><th><span class="lg">Mensagens</span><span class="sm">Msgs</span></th><th><span class="lg">Por min agora</span><span class="sm">/min</span></th><th><span class="sw" style="background:var(--lula)"></span>Lula</th><th><span class="sw" style="background:var(--fla)"></span>Flávio</th><th class="bc">Bolha</th></tr></thead><tbody>` +
     linhas.map(r => `<tr><td><a href="${esc(r.k.url)}" target="_blank" rel="noopener">${esc(r.k.rotulo || r.k.nome)}</a>${r.k.bolha ? ` <span class="tag bm">${esc(r.k.bolha)}</span>` : ""}</td><td>${nf.format(r.k.n_total || 0)}</td><td>${r.pm === null ? "–" : nf.format(Math.round(r.pm))}</td><td>${f(r.L)}</td><td>${f(r.F)}</td><td class="bc">${r.k.bolha ? `<span class="tag" title="Lula − Flávio no canal: ${r.k.lean === null || r.k.lean === undefined ? "–" : sgn(+r.k.lean)}">${esc(r.k.bolha)}</span>` : '<span class="mut2">–</span>'}</td></tr>`).join("") + "</tbody>";
   // small multiples
