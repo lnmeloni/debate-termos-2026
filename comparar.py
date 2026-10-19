@@ -26,6 +26,11 @@ CANAIS = {  # nome: (rótulo, url da live)
     "crentenews": ("Crente News (react)", "https://www.youtube.com/watch?v=BEDeoAZ4xKM"),
     "focopatria": ("Foco Pátria (react)", "https://www.youtube.com/watch?v=kDKRsR-hvkc"),
     "portalviu": ("Portal VIU", "https://www.youtube.com/watch?v=pB33YNDSf3s"),
+    "shimon": ("Shimon Oliveira", "https://www.youtube.com/watch?v=7EirjYrkvFA"),
+    "steffan": ("Steffan", "https://www.youtube.com/watch?v=d7D2nPavEYA"),
+    "vaznaminha": ("VazNaMinha Cast", "https://www.youtube.com/watch?v=qirN-TF7pd4"),
+    "thebunker": ("The Bunker", "https://www.youtube.com/watch?v=tIsN0_9Xwjc"),
+    "thenewscc": ("the news cc (react)", "https://www.youtube.com/watch?v=-D_2Ev0VABE"),
     "bluesky": ("Bluesky (posts em português)", "https://bsky.app/search?q=debate%20lula%20fl%C3%A1vio"),
 }
 
@@ -71,11 +76,18 @@ def rodar():
             b["nl"] += int(r["n_lula"] or 0); b["fl"] += int(r["fav_lula"] or 0); b["dl"] += int(r["desf_lula"] or 0)
             b["nf"] += int(r["n_flavio"] or 0); b["ff"] += int(r["fav_flavio"] or 0); b["df"] += int(r["desf_flavio"] or 0)
         vals = {"sl": [], "sf": [], "pl": [], "pf": []}
+        var = {"sl": [], "sf": [], "pl": [], "pf": []}
         for b in porb.values():
-            if b["nl"]: vals["sl"].append((b["fl"] - b["dl"]) / b["nl"]); vals["pl"].append(b["fl"] / b["nl"])
-            if b["nf"]: vals["sf"].append((b["ff"] - b["df"]) / b["nf"]); vals["pf"].append(b["ff"] / b["nf"])
+            for n, fa, de, ks, kp in (("nl", "fl", "dl", "sl", "pl"), ("nf", "ff", "df", "sf", "pf")):
+                if b[n]:
+                    pf_, pd_ = b[fa] / b[n], b[de] / b[n]
+                    sal = pf_ - pd_
+                    vals[ks].append(sal); var[ks].append((pf_ + pd_ - sal ** 2) / b[n])
+                    vals[kp].append(pf_); var[kp].append(pf_ * (1 - pf_) / b[n])
         med = lambda v: round(sum(v) / len(v), 2) if v else ""
-        eq.append([mi, med(vals["sl"]), med(vals["sf"]), med(vals["pl"]), med(vals["pf"]), sorted(porb)])
+        ic = lambda k: round(1.96 * (sum(var[k]) ** 0.5) / len(var[k]), 2) if var[k] else ""  # meia-largura do IC de 95%
+        eq.append([mi, med(vals["sl"]), med(vals["sf"]), med(vals["pl"]), med(vals["pf"]), sorted(porb),
+                   ic("sl"), ic("sf"), ic("pl"), ic("pf")])
     for c in saida:
         del c["_sent"]
     with open("docs/canais.json", "w", encoding="utf-8") as f:

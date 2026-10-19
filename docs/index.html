@@ -106,7 +106,7 @@
 
   <section class="card">
     <h2>Índice equilibrado por bolha</h2>
-    <p class="mut">É o mesmo saldo de −1 a +1, mas cada bolha (pró-Lula, pró-Flávio, dividida) pesa igual, para o chat maior não decidir sozinho. A bolha de cada canal é definida pelo próprio comportamento do chat ao longo do debate. Pontos são cada minuto; a linha é a média móvel de 3 minutos.</p>
+    <p class="mut">É o mesmo saldo de −1 a +1, mas cada bolha (pró-Lula, pró-Flávio, dividida) pesa igual, para o chat maior não decidir sozinho. A bolha de cada canal é definida pelo próprio comportamento do chat ao longo do debate. Cada ponto é um minuto; a linha é a média móvel de 3 minutos.</p>
     <div class="chart"><canvas id="e" aria-label="Índice equilibrado por bolha" role="img"></canvas></div>
     <p class="mut" id="eq-bolhas" style="margin-top:8px"></p>
     <h3 class="h3s">Mensagens favoráveis (%)</h3>
@@ -122,13 +122,13 @@
 
   <section class="card">
     <h2>Sentimento por minuto</h2>
-    <p class="mut">Saldo de −1 (só ataque) a +1 (só apoio). Pontos são cada minuto; a linha é a média móvel de 3 minutos, ponderada pelo número de mensagens. Acima de zero, o chat apoia mais do que ataca.</p>
+    <p class="mut">Saldo de −1 (só ataque) a +1 (só apoio). Cada ponto é um minuto; a linha é a média móvel de 3 minutos, ponderada pelo número de mensagens. Acima de zero, o chat apoia mais do que ataca.</p>
     <div class="chart"><canvas id="s" aria-label="Sentimento por minuto" role="img"></canvas></div>
   </section>
 
   <section class="card" id="canais-sec">
     <h2>Por canal</h2>
-    <p class="mut">Cada chat tem a sua audiência (há canais de react e de análise), então a comparação mostra bolhas diferentes, não o eleitorado. Saldo médio ponderado pelo número de mensagens classificadas, só nos minutos com dado.</p>
+    <p class="mut">Cada chat tem a sua audiência (há canais de react e de análise), então a comparação é entre bolhas, e nenhuma delas representa o eleitorado. Saldo médio ponderado pelo número de mensagens classificadas, só nos minutos com dado.</p>
     <div class="tblw"><table class="tbl" id="canais-tbl"></table></div>
     <div class="leg"><span><i style="background:var(--lula)"></i>Lula</span><span><i style="background:var(--fla)"></i>Flávio</span><span class="mut" style="font-size:12px">linha = média móvel de 3 min · pontos = cada minuto</span></div>
     <div class="minis" id="minis"></div>
@@ -144,7 +144,7 @@
     <h2>Como é feito</h2>
     <div class="passos">
       <div><h3>1. Coleta</h3>
-        <p>Um robô lê o chat ao vivo de 13 transmissões do debate no YouTube (8 desde o começo e 5 reacts e canais adicionados às 20h52), mensagem a mensagem, usando a ferramenta aberta yt-dlp. Desde 20h43 também lê o fluxo público do Bluesky (Jetstream), guardando os posts em português que citam Lula, Flávio, Bolsonaro ou o debate. Cada canal é lido desde que a sua coleta começou: a Band desde cerca de 20h06, os outros desde cerca de 20h35.</p>
+        <p>Um robô lê o chat ao vivo de 13 transmissões do debate no YouTube (8 desde o começo e 5 acrescentadas às 20h52, entre reacts e outros canais), mensagem a mensagem, usando a ferramenta aberta yt-dlp. Desde 20h43 também lê o fluxo público do Bluesky (Jetstream), guardando os posts em português que citam Lula, Flávio, Bolsonaro ou o debate. Os dados de cada canal começam quando a coleta dele começou. A da Band, por volta das 20h06; a de outros sete, por volta das 20h35; a dos cinco acrescentados, às 20h52.</p>
         <ul id="lista-canais" class="lc"></ul></div>
       <div><h3>2. Termos</h3>
         <p>Cada mensagem é quebrada em palavras e pares de palavras, sem as palavras vazias (artigos, preposições e afins). Um termo conta uma vez por mensagem, mesmo que apareça repetido.</p>
@@ -153,12 +153,12 @@
         <p>A cada minuto fechado, o robô sorteia até 120 mensagens (80 nos canais menores) que citam um dos candidatos pelo nome, apelido, partido ou por bolsonarismo. O modelo Claude Haiku, da Anthropic, marca cada uma como favorável, desfavorável ou neutra para cada candidato.</p>
         <p>O saldo é (favoráveis − desfavoráveis) ÷ mensagens que falam do candidato, e vai de −1 a +1. A linha dos gráficos é a média dos últimos 3 minutos.</p></div>
       <div><h3>Ajuste por bolha</h3>
-        <p>Cada chat tem a sua torcida. O da Band, por exemplo, é pró-Lula. Por isso cada canal é classificado pelo próprio comportamento: se, no acumulado, o saldo de Lula menos o de Flávio passa de +0,6, o canal é pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividido. O índice equilibrado faz a média dentro de cada bolha e depois dá peso igual a cada uma.</p>
+        <p>Cada chat tem a sua torcida. O da Band, por exemplo, é pró-Lula. Por isso cada canal é classificado pelo próprio comportamento. Se, no acumulado, o saldo de Lula menos o de Flávio passa de +0,6, o canal é pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividido. O índice equilibrado faz a média dentro de cada bolha e depois dá peso igual a cada uma.</p>
         <p>Só às 20h52 entraram cinco lives novas: os reacts de direita de Max Cardoso, Eduardo Bisotto, Crente News e Foco Pátria, e o Portal VIU. Antes disso, o índice depende de poucas bolhas.</p></div>
       <div><h3>4. Limites</h3>
         <ul>
-          <li>Chat não é eleitorado, e cada live tem a sua bolha. Vale olhar a variação, não o nível.</li>
-          <li>Ironia e torcida organizada existem, e o modelo pode errar nelas.</li>
+          <li>Chat não é eleitorado, e cada live tem a sua bolha. Faz mais sentido olhar a variação ao longo do debate do que o nível.</li>
+          <li>Ironia e torcida organizada existem, e o modelo pode se confundir com elas.</li>
           <li>Minutos com poucas mensagens oscilam muito. Passe o mouse num ponto para ver quantas entraram (n).</li>
           <li>Os dados chegam com 2 a 5 minutos de atraso. A página se atualiza sozinha a cada 30 segundos.</li>
           <li>Só números agregados são publicados, nenhum nome de usuário nem mensagem.</li>
@@ -346,7 +346,7 @@ function renderCanais() {
     linhas.map(r => `<tr><td><a href="${esc(r.k.url)}" target="_blank" rel="noopener">${esc(r.k.rotulo || r.k.nome)}</a>${r.k.bolha ? ` <span class="tag bm">${esc(r.k.bolha)}</span>` : ""}</td><td>${nf.format(r.k.n_total || 0)}</td><td>${r.pm === null ? "–" : nf.format(Math.round(r.pm))}</td><td>${f(r.L)}</td><td>${f(r.F)}</td><td class="bc">${r.k.bolha ? `<span class="tag" title="Lula − Flávio no canal: ${r.k.lean === null || r.k.lean === undefined ? "–" : sgn(+r.k.lean)}">${esc(r.k.bolha)}</span>` : '<span class="mut2">–</span>'}</td></tr>`).join("") + "</tbody>";
   // small multiples
   const vis = linhas.filter(r => r.nmin >= 3), oc = linhas.filter(r => r.nmin < 3);
-  $("minis-oc").textContent = oc.length ? `Sem minigráfico por ter menos de 3 minutos de sentimento classificado: ${oc.map(r => r.k.rotulo || r.k.nome).join(", ")}.` : "";
+  $("minis-oc").textContent = oc.length ? `Sem minigráfico, por terem menos de 3 minutos de sentimento classificado: ${oc.map(r => r.k.rotulo || r.k.nome).join(", ")}.` : "";
   let fim = EIXO ? EIXO[EIXO.length - 1] : INICIO;
   vis.forEach(r => { const u = r.se.length ? r.se[r.se.length - 1][0] : fim; if (u > fim) fim = u; });
   const eixo = minutos(INICIO, fim);

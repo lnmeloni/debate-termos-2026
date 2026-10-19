@@ -1,6 +1,6 @@
 # O chat do debate, minuto a minuto (Band, 18/10/2026)
 
-**🔴 Ao vivo: https://lnmeloni.github.io/debate-termos-2026/** · termos mais falados, termos subindo e sentimento minuto a minuto sobre Lula e Flávio Bolsonaro nos chats ao vivo de 8 transmissões do debate no YouTube.
+**🔴 Ao vivo: https://lnmeloni.github.io/debate-termos-2026/** · termos mais falados, termos subindo e sentimento minuto a minuto sobre Lula e Flávio Bolsonaro nos chats ao vivo de 13 transmissões do debate no YouTube e no Bluesky.
 
 ## Como é feito
 
@@ -13,11 +13,11 @@
 
 ## Limites
 
-- O chat de uma live não é o eleitorado. Cada transmissão tem a sua audiência (há canais de react e de análise), então o interessante é a variação no tempo e a diferença entre bolhas, não o nível.
+- O chat de uma live não é o eleitorado. Cada transmissão tem a sua audiência (há canais de react e de análise), então o que vale observar é a variação no tempo e a diferença entre bolhas, mais do que o nível.
 - Ironia, torcida organizada e spam confundem a classificação. Minutos com poucas mensagens são ruidosos; a página mostra o n.
 - Atraso de 2 a 5 minutos.
 - Só agregados são publicados. Nenhum nome de usuário nem texto de mensagem sai do computador.
 
 ## Canais
 
-Band Jornalismo · Rádio BandNews FM · Rádio Bandeirantes · CNN Brasil · DCM TV (react) · Ben Mendes TV · Canal Tragicômico (análise) · MRTV Márcio Rangel · Bluesky. Links em `comparar.py`.
+Band Jornalismo · Rádio BandNews FM · Rádio Bandeirantes · CNN Brasil · DCM TV (react) · Ben Mendes TV · Canal Tragicômico (análise) · MRTV Márcio Rangel · e, desde 20h52, Max Cardoso, Eduardo Bisotto, Crente News, Foco Pátria e Portal VIU · Bluesky. Links em `comparar.py`.
