@@ -34,42 +34,15 @@ CANAIS = {  # nome: (rótulo, url da live)
     "bluesky": ("Bluesky (posts em português)", "https://bsky.app/search?q=debate%20lula%20fl%C3%A1vio"),
 }
 
-def rodar():
-    saida = []
-    for nome, (rotulo, url) in CANAIS.items():
-        msgs = {}
-        p = f"dados/{nome}_mensagens.csv"
-        if os.path.exists(p):
-            with open(p, encoding="utf-8") as f:
-                for r in csv.DictReader(f):
-                    mi = r["ts_brt"][11:16]
-                    msgs[mi] = msgs.get(mi, 0) + 1
-        sent = {}
-        p = f"dados/{nome}_sentimento.csv"
-        if os.path.exists(p):
-            with open(p, encoding="utf-8") as f:
-                for r in csv.DictReader(f):
-                    sent[r["minuto_brt"]] = r
-        serie = []
-        for mi in sorted(set(msgs) | set(sent)):
-            s = sent.get(mi, {})
-            serie.append([mi, msgs.get(mi, 0), s.get("saldo_lula", ""), s.get("saldo_flavio", ""),
-                          int(s.get("n_lula") or 0), int(s.get("n_flavio") or 0)])
-        tot = {k: sum(int(r.get(k) or 0) for r in sent.values()) for k in ("n_lula", "fav_lula", "desf_lula", "n_flavio", "fav_flavio", "desf_flavio")}
-        lean = None
-        if tot["n_lula"] >= 30 and tot["n_flavio"] >= 30:
-            lean = (tot["fav_lula"] - tot["desf_lula"]) / tot["n_lula"] - (tot["fav_flavio"] - tot["desf_flavio"]) / tot["n_flavio"]
-        bolha = None if lean is None else ("pró-Lula" if lean > 0.6 else "pró-Flávio" if lean < -0.6 else "dividida")
-        saida.append({"nome": nome, "rotulo": rotulo, "url": url, "n_total": sum(msgs.values()), "serie": serie,
-                      "lean": None if lean is None else round(lean, 2), "bolha": bolha, "_sent": sent})
+def equilibrar(saida, chave):
     # Índice equilibrado: em cada minuto, média ponderada pelo n dentro de cada bolha e depois média simples
     # entre as bolhas presentes, para que a bolha maior (o chat da Band) não decida sozinha.
     eq = []
-    minutos = sorted({mi for c in saida if c["bolha"] for mi in c["_sent"]})
+    minutos = sorted({mi for c in saida if c["bolha"] for mi in c[chave]})
     for mi in minutos:
         porb = {}
         for c in saida:
-            r = c["_sent"].get(mi)
+            r = c[chave].get(mi)
             if not c["bolha"] or not r:
                 continue
             b = porb.setdefault(c["bolha"], {k: 0 for k in ("nl", "fl", "dl", "nf", "ff", "df")})
@@ -88,14 +61,47 @@ def rodar():
         ic = lambda k: round(1.96 * (sum(var[k]) ** 0.5) / len(var[k]), 2) if var[k] else ""  # meia-largura do IC de 95%
         eq.append([mi, med(vals["sl"]), med(vals["sf"]), med(vals["pl"]), med(vals["pf"]), sorted(porb),
                    ic("sl"), ic("sf"), ic("pl"), ic("pf")])
+    return eq
+
+def rodar():
+    saida = []
+    for nome, (rotulo, url) in CANAIS.items():
+        msgs = {}
+        p = f"dados/{nome}_mensagens.csv"
+        if os.path.exists(p):
+            with open(p, encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    mi = r["ts_brt"][11:16]
+                    msgs[mi] = msgs.get(mi, 0) + 1
+        sent, gpt = {}, {}
+        for dest, p in ((sent, f"dados/{nome}_sentimento.csv"), (gpt, f"dados/{nome}_sentimento_gpt.csv")):
+            if os.path.exists(p):
+                with open(p, encoding="utf-8") as f:
+                    for r in csv.DictReader(f):
+                        dest[r["minuto_brt"]] = r
+        serie = []
+        for mi in sorted(set(msgs) | set(sent)):
+            s = sent.get(mi, {})
+            serie.append([mi, msgs.get(mi, 0), s.get("saldo_lula", ""), s.get("saldo_flavio", ""),
+                          int(s.get("n_lula") or 0), int(s.get("n_flavio") or 0)])
+        tot = {k: sum(int(r.get(k) or 0) for r in sent.values()) for k in ("n_lula", "fav_lula", "desf_lula", "n_flavio", "fav_flavio", "desf_flavio")}
+        lean = None
+        if tot["n_lula"] >= 30 and tot["n_flavio"] >= 30:
+            lean = (tot["fav_lula"] - tot["desf_lula"]) / tot["n_lula"] - (tot["fav_flavio"] - tot["desf_flavio"]) / tot["n_flavio"]
+        bolha = None if lean is None else ("pró-Lula" if lean > 0.6 else "pró-Flávio" if lean < -0.6 else "dividida")
+        saida.append({"nome": nome, "rotulo": rotulo, "url": url, "n_total": sum(msgs.values()), "serie": serie,
+                      "lean": None if lean is None else round(lean, 2), "bolha": bolha, "_sent": sent, "_gpt": gpt})
+    eq = equilibrar(saida, "_sent")
+    eq_gpt = equilibrar(saida, "_gpt")
     for c in saida:
-        del c["_sent"]
+        del c["_sent"], c["_gpt"]
     with open("docs/canais.json", "w", encoding="utf-8") as f:
-        json.dump({"atualizado": datetime.now(BRT).strftime("%H:%M:%S"), "canais": saida, "equilibrado": eq}, f, ensure_ascii=False)
+        json.dump({"atualizado": datetime.now(BRT).strftime("%H:%M:%S"), "canais": saida, "equilibrado": eq, "equilibrado_gpt": eq_gpt}, f, ensure_ascii=False)
     print(datetime.now(BRT).strftime("%H:%M:%S"), " · ".join(f"{c['rotulo']} {c['n_total']}" for c in saida), flush=True)
 
-if "--loop" in sys.argv:
-    while True:
-        rodar(); time.sleep(60)
-else:
-    rodar()
+if __name__ == "__main__":
+    if "--loop" in sys.argv:
+        while True:
+            rodar(); time.sleep(60)
+    else:
+        rodar()
