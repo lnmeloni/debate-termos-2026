@@ -89,6 +89,7 @@
   .mini .mc { position:relative; height:140px; margin-top:4px; }
   .leg { display:flex; gap:14px; font-size:12px; color:var(--fg2); margin-top:10px; align-items:center; flex-wrap:wrap; }
   .leg i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:5px; }
+  .alerta { margin:10px 0 0; font-size:14px; font-weight:500; color:var(--fg); background:var(--card); border:1px solid var(--mut); border-left:4px solid var(--fg2); border-radius:6px; padding:8px 10px; }
   .aviso { margin:10px 0 0; font-size:13px; color:var(--fg2); border-left:3px solid var(--line); padding:2px 0 2px 10px; }
   details.dt { margin-top:12px; }
   details summary { cursor:pointer; color:var(--fg2); font-size:14px; }
@@ -111,6 +112,7 @@
     <h1>O chat do debate, minuto a minuto</h1>
     <p class="sub">Lula × Flávio Bolsonaro · debate da Band · 18/10/2026 · 18 lives do YouTube e o Bluesky</p>
     <div class="meta"><span class="dot off" id="dot"></span><span id="meta">carregando…</span></div>
+    <p class="alerta" id="alerta" hidden></p>
     <p class="aviso">O chat não é o eleitorado. Cada live tem a sua torcida, então faz mais sentido olhar a variação ao longo do debate do que o nível.</p>
   </header>
 
@@ -123,12 +125,12 @@
 
   <section class="card">
     <h2>Índice equilibrado por bolha</h2>
-    <p class="mut">Saldo de −1 a +1 com peso igual para cada bolha de chat. Linha é a média de 3 min; faixa é o intervalo de 95%, e faixas cruzadas indicam empate técnico.</p>
+    <p class="mut">Saldo de −1 a +1 com peso igual para cada bolha de chat. Linha é a média de 3 min; faixa = amostra (95%) + divergência entre os dois classificadores, e faixas cruzadas indicam empate técnico. Linhas verticais marcam a entrada de fontes: mudança brusca logo depois delas pode ser efeito de quem entrou, não do debate.</p>
     <div class="chart"><canvas id="e" aria-label="Índice equilibrado por bolha" role="img"></canvas></div>
     <p class="mut" id="eq-conc" style="margin-top:8px"></p>
     <p class="mut" id="eq-bolhas" style="margin-top:4px"></p>
     <h3 class="h3s">Mensagens favoráveis (%)</h3>
-    <p class="mut">Mesmo peso por bolha. É a métrica que empresas como a AP Exata publicam, para comparação.</p>
+    <p class="mut">Mesmo peso por bolha; faixa só da amostra (95%). É a métrica que empresas como a AP Exata publicam, para comparação.</p>
     <div class="chart sm"><canvas id="p" aria-label="Percentual de mensagens favoráveis" role="img"></canvas></div>
   </section>
 
@@ -164,7 +166,9 @@
       <li><b>Sentimento.</b> A cada minuto fechado, o robô sorteia até 120 mensagens (80 nos canais menores) que citam um candidato por nome, apelido, partido ou bolsonarismo, e o modelo Claude Haiku, da Anthropic, marca cada uma como favorável, desfavorável ou neutra para cada candidato. O saldo é (favoráveis − desfavoráveis) ÷ mensagens sobre o candidato, de −1 a +1.</li>
       <li><b>Bolhas.</b> Cada canal é classificado pelo próprio chat. Se, no acumulado, o saldo de Lula menos o de Flávio passa de +0,6, o canal é pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividido.</li>
       <li><b>Índice equilibrado.</b> Média ponderada pelo número de mensagens dentro de cada bolha, depois média simples entre as bolhas, para o chat maior não decidir sozinho. Antes das 20h52 ele depende de poucas bolhas.</li>
-      <li><b>Faixa.</b> Intervalo de 95% calculado do tamanho da amostra de cada bolha. Não cobre erro do classificador.</li>
+      <li><b>Faixa.</b> No saldo, combina o intervalo de 95% da amostra de cada bolha com a divergência entre Claude e GPT naquele minuto (raiz da soma dos quadrados); sem GPT, usa a divergência média observada. Cartões e "empate técnico" usam essa faixa. No gráfico de % favoráveis, a faixa é só da amostra.</li>
+      <li><b>Entrada de fontes.</b> As linhas verticais marcam 20:35 (+7 lives), 20:43 (+Bluesky), 20:52 (+5 lives, reacts) e 21:00 (+5 lives).</li>
+      <li><b>Alerta.</b> Se os dados ficam mais de 5 minutos sem atualizar, ou um arquivo não carrega, aparece um aviso no topo.</li>
       <li><b>Segundo classificador.</b> A mesma amostra, com o mesmo prompt, também é classificada pelo GPT (gpt-4o-mini), de outra empresa (linhas tracejadas). Quando os dois concordam, o sinal é mais confiável; a diferença entre eles é uma medida grosseira do erro do classificador, que a faixa de 95% não cobre.</li>
       <li><b>Cartões e tabela.</b> Os cartões mostram médias dos últimos 3 minutos completos, e a seta compara com os 3 anteriores. Na tabela, o saldo médio do canal é ponderado pelo número de mensagens, só nos minutos com dado.</li>
       <li><b>Termos.</b> Cada mensagem vira palavras e pares de palavras, sem palavras vazias, e cada termo conta uma vez por mensagem. "Subindo" é a frequência nos últimos 5 minutos dividida pela do resto do debate.</li>
@@ -182,6 +186,16 @@ const nf = new Intl.NumberFormat("pt-BR");
 const sgn = (x, d = 2) => { const a = Math.abs(x).toFixed(d); return (+a === 0 ? "" : x > 0 ? "+" : "−") + a.replace(".", ","); };
 const num = x => (x === "" || x === null || x === undefined || isNaN(+x)) ? null : +x;
 const INICIO = "20:05";
+// entradas de fontes, para não ler mudança de composição como reação ao debate
+const MARCOS = [["20:35", "+7 lives"], ["20:43", "+Bluesky"], ["20:52", "+5 lives (reacts)"], ["21:00", "+5 lives"]];
+Chart.register({ id: "marcos", defaults: { show: false, rotulos: true },
+  afterDatasetsDraw(ch, _a, op) { if (!op.show) return; const { ctx, chartArea: ca, scales: { x } } = ch; const labs = ch.data.labels || [];
+    ctx.save(); ctx.strokeStyle = css("--mut"); ctx.fillStyle = css("--mut"); ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.globalAlpha = .7;
+    ctx.font = "10px -apple-system, system-ui, sans-serif"; ctx.textBaseline = "top";
+    MARCOS.forEach(([m, t], k) => { const i = labs.indexOf(m); if (i < 0) return; const px = x.getPixelForValue(i);
+      ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom); ctx.stroke();
+      if (op.rotulos) { ctx.globalAlpha = 1; ctx.fillText(t, px + 3, ca.top + 2 + (k % 2) * 12); ctx.globalAlpha = .7; } });
+    ctx.restore(); } });
 let charts = {}, ultimo = { t: null, s: null, c: null }, EIXO = null, MINIS = "";
 
 function base(yopts) {
@@ -227,7 +241,6 @@ function render0() {
   let eixo = null;
   if (d) {
     $("meta").textContent = `ao vivo · atualizado às ${d.atualizado}`;
-    $("dot").classList.remove("off");
     $("mais-lab").textContent = `janela ${d.janela} · ${nf.format(d.n_janela)} mensagens`;
     barras("mais", d.mais, r => r[1], r => nf.format(r[1]));
     barras("sub", d.subindo, r => r[2], r => `×${String(r[2]).replace(".", ",")} <small>(${r[1]})</small>`);
@@ -302,7 +315,7 @@ function renderEq() {
   const icMM = (vals, h) => vals.map((_, i) => { if (vals[i] === null) return null; let s2 = 0, k = 0;
     for (let j = Math.max(0, i - 2); j <= i; j++) if (vals[j] !== null) { if (h[j] === null) return null; s2 += h[j] * h[j]; k++; }
     return k ? Math.sqrt(s2) / k : null; });
-  const faixa = (mm, h, lo, hi, escala) => { const hw = icMM(mm.raw, h);
+  const faixa = (mm, h, lo, hi, escala, dd) => { const hw = icMM(mm.raw, h).map((x, i) => x === null ? null : (dd ? Math.sqrt(x * x + dd[i] * dd[i]) : x));
     return [mm.line.map((y, i) => y === null || hw[i] === null ? null : Math.min(hi, y + hw[i] * escala)),
             mm.line.map((y, i) => y === null || hw[i] === null ? null : Math.max(lo, y - hw[i] * escala))]; };
   const banda = (lbl, cor, up, dn) => [
@@ -315,6 +328,7 @@ function renderEq() {
     ticks: { color: css("--mut"), stepSize: 0.5, callback: x => x === 0 ? "0" : sgn(x, 1) },
     grid: { color: c => c.tick.value === 0 ? css("--mut") : css("--grid"), lineWidth: c => c.tick.value === 0 ? 1.5 : 1 } });
   o.plugins.tooltip.footerColor = css("--mut"); o.plugins.tooltip.footerFont = { weight: "normal", size: 11 };
+  o.plugins.marcos = { show: true, rotulos: true };
   o.plugins.tooltip.callbacks = { footer: rodape, label: c => { if (c.parsed.y === null) return null;
     const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
     if (c.datasetIndex >= 8) return `${nome}, GPT, média 3 min: ${sgn(c.parsed.y)}`;
@@ -325,16 +339,21 @@ function renderEq() {
   // só minutos em que o GPT cobriu as mesmas bolhas que o Claude (senão a comparação mistura composições)
   const mesma = m => gby[m] && by[m] && Array.isArray(gby[m][5]) && Array.isArray(by[m][5]) && gby[m][5].slice().sort().join() === by[m][5].slice().sort().join();
   const gv = k => eixo.map(m => mesma(m) ? num(gby[m][k]) : null);
-  const gL = gv(1), gF = gv(2);
+  const gL = gv(1), gF = gv(2), mgL = mm3(gL, um), mgF = mm3(gF, um);
+  // divergência entre classificadores: |Claude − GPT| na média móvel; sem GPT, a diferença média absoluta observada
+  const difs = L.map((x, i) => x !== null && gL[i] !== null ? Math.abs(x - gL[i]) : null).concat(F.map((x, i) => x !== null && gF[i] !== null ? Math.abs(x - gF[i]) : null)).filter(x => x !== null);
+  const dMed = difs.length ? difs.reduce((a, b) => a + b, 0) / difs.length : 0;
+  const dL = mL.map((y, i) => y !== null && mgL[i] !== null ? Math.abs(y - mgL[i]) : dMed);
+  const dF = mF.map((y, i) => y !== null && mgF[i] !== null ? Math.abs(y - mgF[i]) : dMed);
   draw("e", eixo, [
     linha("Lula · Claude", mL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
     linha("Flávio · Claude", mF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
     linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
     linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
-    ...banda("Lula", css("--lula"), ...faixa({ line: mL, raw: L }, icL, -1, 1, 1)),
-    ...banda("Flávio", css("--fla"), ...faixa({ line: mF, raw: F }, icF, -1, 1, 1)),
-    linha("Lula · GPT", mm3(gL, um), css("--lula"), { spanGaps: true, borderWidth: 1.5, borderDash: [5, 4] }),
-    linha("Flávio · GPT", mm3(gF, um), css("--fla"), { spanGaps: true, borderWidth: 1.5, borderDash: [5, 4] }),
+    ...banda("Lula", css("--lula"), ...faixa({ line: mL, raw: L }, icL, -1, 1, 1, dL)),
+    ...banda("Flávio", css("--fla"), ...faixa({ line: mF, raw: F }, icF, -1, 1, 1, dF)),
+    linha("Lula · GPT", mgL, css("--lula"), { spanGaps: 3, borderWidth: 1.5, borderDash: [5, 4] }),
+    linha("Flávio · GPT", mgF, css("--fla"), { spanGaps: 3, borderWidth: 1.5, borderDash: [5, 4] }),
   ], o);
   // concordância minuto a minuto entre os dois classificadores
   const par = (a, b) => a.map((x, i) => [x, b[i]]).filter(([x, y]) => x !== null && y !== null);
@@ -348,6 +367,7 @@ function renderEq() {
     ? `Concordância Claude × GPT em ${nmin} minutos com as mesmas bolhas: correlação ${f2(corr(todos))} (Lula ${f2(corr(pl))}, Flávio ${f2(corr(pf))}), diferença média absoluta ${f2(todos.reduce((a, p) => a + Math.abs(p[0] - p[1]), 0) / todos.length)}.`
     : "Concordância Claude × GPT: poucos minutos em comum até agora.";
   const op = base({ min: 0, max: 100, ticks: { color: css("--mut"), stepSize: 25, callback: x => x + "%" } });
+  op.plugins.marcos = { show: true, rotulos: false };
   op.plugins.tooltip.footerColor = css("--mut"); op.plugins.tooltip.footerFont = { weight: "normal", size: 11 };
   const mpL = mm3(pL, um), mpF = mm3(pF, um);
   op.plugins.tooltip.callbacks = { footer: rodape, label: c => { if (c.parsed.y === null) return null;
@@ -366,17 +386,18 @@ function renderEq() {
   const ult = q[q.length - 1];
   $("eq-bolhas").textContent = `Bolhas no último minuto (${ult[0]}): ${(Array.isArray(ult[5]) && ult[5].length) ? ult[5].join(", ") : "nenhuma"}. A lista de cada minuto aparece ao passar o mouse.`;
   $("eq-bolhas").title = mud.length > 1 ? "Composição ao longo do debate: " + mud.join(" → ") : "";
-  const kpi = (vals, h, el) => {
+  const kpi = (vals, h, dd, el) => {
     const idx = vals.map((x, i) => x !== null ? i : -1).filter(i => i >= 0);
     const m = ix => ix.length ? ix.reduce((a, i) => a + vals[i], 0) / ix.length : null;
     const u = m(idx.slice(-3)), p = m(idx.slice(-6, -3));
-    const i3 = idx.slice(-3), hw = i3.length && i3.every(i => h[i] !== null) ? Math.sqrt(i3.reduce((a, i) => a + h[i] * h[i], 0)) / i3.length : null;
+    const i3 = idx.slice(-3), hs = i3.length && i3.every(i => h[i] !== null) ? Math.sqrt(i3.reduce((a, i) => a + h[i] * h[i], 0)) / i3.length : null;
+    const hw = hs === null ? null : Math.sqrt(hs * hs + dd[i3[i3.length - 1]] ** 2); // amostra + divergência entre classificadores
     $(el).textContent = u === null ? "–" : sgn(u);
     $(el + "-pm").textContent = (u !== null && hw !== null) ? `± ${hw.toFixed(2).replace(".", ",")}` : "";
     $(el + "-d").textContent = (u !== null && p !== null) ? `${seta(u - p)} ${sgn(u - p)} vs. 3 min antes` : "\u00a0";
     return u === null ? null : { u, hw };
   };
-  const kl = kpi(L, icL, "k-l"), kf = kpi(F, icF, "k-f");
+  const kl = kpi(L, icL, dL, "k-l"), kf = kpi(F, icF, dF, "k-f");
   const empate = kl && kf && kl.hw !== null && kf.hw !== null && kl.u - kl.hw <= kf.u + kf.hw && kf.u - kf.hw <= kl.u + kl.hw;
   $("k-l-t").hidden = $("k-f-t").hidden = !empate;
 }
@@ -418,7 +439,7 @@ function renderCanais() {
     const o = base({ min: -1, max: 1, afterBuildTicks: ax => { ax.ticks = [{ value: -1 }, { value: 0 }, { value: 1 }]; },
       ticks: { color: css("--mut"), font: { size: 10 }, callback: x => x === 0 ? "0" : sgn(x, 0) },
       grid: { color: c => c.tick.value === 0 ? css("--mut") : css("--grid"), lineWidth: c => c.tick.value === 0 ? 1.2 : 1 } });
-    o.plugins.legend.display = false;
+    o.plugins.legend.display = false; o.plugins.marcos = { show: true, rotulos: false };
     o.scales.x.ticks.maxTicksLimit = 4; o.scales.x.ticks.font = { size: 10 };
     const ns = [nL, nF, nL, nF];
     o.plugins.tooltip.callbacks = { label: c => { if (c.parsed.y === null) return null;
@@ -433,12 +454,25 @@ function renderCanais() {
   });
 }
 
+async function pega(arq) { const r = await fetch(arq + "?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+function horaSP() { return new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(new Date()); }
+const seg = hms => { const [h, m, x] = String(hms).split(":").map(Number); return h * 3600 + m * 60 + (x || 0); };
 async function atualiza() {
-  try { ultimo.t = await (await fetch("termos.json?t=" + Date.now())).json(); }
-  catch (e) { if (!ultimo.t) $("meta").textContent = "aguardando dados…"; }
-  try { ultimo.s = await (await fetch("sentimento.json?t=" + Date.now())).json(); } catch (e) {}
-  try { ultimo.c = await (await fetch("canais.json?t=" + Date.now())).json(); } catch (e) {}
+  const falhas = [];
+  try { ultimo.t = await pega("termos.json"); } catch (e) { falhas.push("termos"); if (!ultimo.t) $("meta").textContent = "aguardando dados…"; }
+  try { ultimo.s = await pega("sentimento.json"); } catch (e) { falhas.push("sentimento"); }
+  try { ultimo.c = await pega("canais.json"); } catch (e) { falhas.push("canais"); }
   try { render(); } catch (e) { console.warn(e); }
+  // dado parado ou falha de carga
+  const msgs = [];
+  if (ultimo.c && ultimo.c.atualizado) {
+    let atraso = seg(horaSP()) - seg(ultimo.c.atualizado); if (atraso < -43200) atraso += 86400;
+    if (atraso > 300) msgs.push(`Sem atualização há ${Math.floor(atraso / 60)} min; a coleta pode ter parado.`);
+  }
+  if (falhas.length) msgs.push(`Não foi possível carregar ${falhas.join(", ")}; mostrando os últimos dados recebidos.`);
+  $("alerta").textContent = msgs.join(" "); $("alerta").hidden = !msgs.length;
+  $("dot").classList.toggle("off", msgs.length > 0 || !ultimo.t);
+  if (ultimo.t) $("meta").textContent = `${msgs.length ? "atrasado" : "ao vivo"} · atualizado às ${(ultimo.c && ultimo.c.atualizado) || ultimo.t.atualizado}`;
 }
 // troca de tema: refaz os gráficos com as cores novas
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { Object.values(charts).forEach(c => c.destroy()); charts = {}; render(); });
