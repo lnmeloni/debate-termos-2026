@@ -80,9 +80,10 @@ if __name__ == "__main__":
                 sal = lambda fa, de, n: round((c[fa] - c[de]) / c[n], 2) if c[n] else ""
                 linhas[mi] = dict(zip(campos, [mi, len(todas), len(sel), c["nl"], c["fl"], c["dl"], sal("fl", "dl", "nl"),
                                                c["nf"], c["ff"], c["df"], sal("ff", "df", "nf")]))
-                with open(SAIDA, "w", newline="", encoding="utf-8") as f:
+                with open(SAIDA + ".tmp", "w", newline="", encoding="utf-8") as f:
                     w = csv.DictWriter(f, fieldnames=campos); w.writeheader()
                     w.writerows(sorted(linhas.values(), key=lambda r: r["minuto_brt"]))
+                os.replace(SAIDA + ".tmp", SAIDA)  # troca atômica: quem lê nunca vê o arquivo pela metade
                 if docs:
                     publicar(linhas)
                 print(f"{mi}  Lula {linhas[mi]['saldo_lula']} (n={c['nl']})  Flávio {linhas[mi]['saldo_flavio']} (n={c['nf']})", flush=True)

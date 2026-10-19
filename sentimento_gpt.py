@@ -68,9 +68,10 @@ def canal(nome):
         sal = lambda fa, de, n: round((c[fa] - c[de]) / c[n], 2) if c[n] else ""
         linhas[mi] = dict(zip(campos, [mi, len(todas), len(sel), c["nl"], c["fl"], c["dl"], sal("fl", "dl", "nl"),
                                        c["nf"], c["ff"], c["df"], sal("ff", "df", "nf")]))
-    with open(saida, "w", newline="", encoding="utf-8") as f:
+    with open(saida + ".tmp", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=campos); w.writeheader()
         w.writerows(sorted(linhas.values(), key=lambda r: r["minuto_brt"]))
+    os.replace(saida + ".tmp", saida)  # troca atômica: quem lê nunca vê o arquivo pela metade
 
 while True:
     def seguro(n):

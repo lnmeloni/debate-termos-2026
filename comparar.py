@@ -34,6 +34,29 @@ CANAIS = {  # nome: (rótulo, url da live)
     "bluesky": ("Bluesky (posts em português)", "https://bsky.app/search?q=debate%20lula%20fl%C3%A1vio"),
 }
 
+BOLHAS = "dados/bolhas.json"  # estado das bolhas (dono: este script)
+CONGELA = 300  # menções classificadas a partir das quais a bolha do canal não muda mais
+
+def classificar_bolha(nome, lean, n):
+    """Bolha pelo saldo acumulado, com histerese de 0,1 em torno de ±0,6 e congelada depois de CONGELA menções.
+    Evita que um canal perto do corte troque de bolha ao vivo e reescreva o índice inteiro."""
+    estado = json.load(open(BOLHAS)) if os.path.exists(BOLHAS) else {}
+    e = estado.get(nome)
+    if e and e.get("congelada"):
+        return e["bolha"]
+    if lean is None:
+        return e["bolha"] if e else None  # leitura falhou: mantém a última bolha válida
+    atual = e["bolha"] if e else None
+    if atual == "pró-Lula" and lean > 0.5 or atual == "pró-Flávio" and lean < -0.5 or atual == "dividida" and -0.7 < lean < 0.7:
+        nova = atual
+    else:
+        nova = "pró-Lula" if lean > 0.6 else "pró-Flávio" if lean < -0.6 else "dividida"
+    estado[nome] = {"bolha": nova, "lean": round(lean, 2), "n": n, "congelada": n >= CONGELA}
+    with open(BOLHAS + ".tmp", "w") as f:
+        json.dump(estado, f, ensure_ascii=False, indent=1)
+    os.replace(BOLHAS + ".tmp", BOLHAS)
+    return nova
+
 def equilibrar(saida, chave):
     # Índice equilibrado: em cada minuto, média ponderada pelo n dentro de cada bolha e depois média simples
     # entre as bolhas presentes, para que a bolha maior (o chat da Band) não decida sozinha.
@@ -88,7 +111,7 @@ def rodar():
         lean = None
         if tot["n_lula"] >= 30 and tot["n_flavio"] >= 30:
             lean = (tot["fav_lula"] - tot["desf_lula"]) / tot["n_lula"] - (tot["fav_flavio"] - tot["desf_flavio"]) / tot["n_flavio"]
-        bolha = None if lean is None else ("pró-Lula" if lean > 0.6 else "pró-Flávio" if lean < -0.6 else "dividida")
+        bolha = classificar_bolha(nome, lean, tot["n_lula"] + tot["n_flavio"])
         saida.append({"nome": nome, "rotulo": rotulo, "url": url, "n_total": sum(msgs.values()), "serie": serie,
                       "lean": None if lean is None else round(lean, 2), "bolha": bolha, "_sent": sent, "_gpt": gpt})
     eq = equilibrar(saida, "_sent")
