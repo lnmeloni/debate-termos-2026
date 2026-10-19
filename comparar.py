@@ -93,6 +93,8 @@ def rodar():
                       "lean": None if lean is None else round(lean, 2), "bolha": bolha, "_sent": sent, "_gpt": gpt})
     eq = equilibrar(saida, "_sent")
     eq_gpt = equilibrar(saida, "_gpt")
+    bol = {r[0]: r[5] for r in eq}
+    eq_gpt = [r for r in eq_gpt if bol.get(r[0]) == r[5]]  # só minutos em que o GPT cobriu as mesmas bolhas que o Claude
     for c in saida:
         del c["_sent"], c["_gpt"]
     with open("docs/canais.json", "w", encoding="utf-8") as f:
