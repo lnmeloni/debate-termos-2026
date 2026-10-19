@@ -51,7 +51,11 @@ def achar(o):
 def ler():
     msgs = {}
     for p in sorted(glob.glob(f"dados/{nome}.live_chat.json*")):
-        with open(p, encoding="utf-8", errors="ignore") as f:
+        try:
+            f = open(p, encoding="utf-8", errors="ignore")
+        except FileNotFoundError:  # o yt-dlp apaga fragmentos já incorporados ao .part
+            continue
+        with f:
             for linha in f:
                 try:
                     d = json.loads(linha)
@@ -119,6 +123,10 @@ def rodar():
 
 if loop:
     while True:
-        rodar(); time.sleep(60)
+        try:
+            rodar()
+        except Exception as e:
+            print(f"{datetime.now():%H:%M:%S} erro: {e}", flush=True)
+        time.sleep(60)
 else:
     rodar()

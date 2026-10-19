@@ -90,6 +90,12 @@
   .leg { display:flex; gap:14px; font-size:12px; color:var(--fg2); margin-top:10px; align-items:center; flex-wrap:wrap; }
   .leg i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:5px; }
   .alerta { margin:10px 0 0; font-size:14px; font-weight:500; color:var(--fg); background:var(--card); border:1px solid var(--mut); border-left:4px solid var(--fg2); border-radius:6px; padding:8px 10px; }
+  .nota-k { margin:8px 0 0; }
+  .glos { margin:10px 0 0; font-size:13px; color:var(--fg2); }
+  .glos b { color:var(--fg); font-weight:600; }
+  .tbl .tp { white-space:normal; margin-top:2px; }
+  .selo { margin:2px 0 0; font-size:11px; color:var(--mut); min-height:0; }
+  .selo:empty { display:none; }
   .aviso { margin:10px 0 0; font-size:13px; color:var(--fg2); border-left:3px solid var(--line); padding:2px 0 2px 10px; }
   details.dt { margin-top:12px; }
   details summary { cursor:pointer; color:var(--fg2); font-size:14px; }
@@ -123,6 +129,9 @@
     <div class="kpi"><div class="lab">Por minuto na Band, agora</div><div class="val" id="k-pm">–</div><div class="delta" id="k-pm-d">&nbsp;</div></div>
   </div>
 
+  <p class="mut nota-k">O índice equilibrado e o "só a Band" diferem porque o chat da Band é pró-Lula; o número que vale é o do índice.</p>
+  <p class="glos"><b>Saldo</b> apoio menos ataque, de −1 a +1 · <b>Bolha</b> grupo de chats com a mesma torcida · <b>Empate técnico</b> faixas dos dois candidatos se cruzam</p>
+
   <section class="card">
     <h2>Índice equilibrado por bolha</h2>
     <p class="mut">Saldo de −1 a +1 com peso igual para cada bolha de chat. Linha é a média de 3 min; faixa = amostra (95%) + divergência entre os dois classificadores, e faixas cruzadas indicam empate técnico. Linhas verticais marcam a entrada de fontes: mudança brusca logo depois delas pode ser efeito de quem entrou, não do debate.</p>
@@ -136,7 +145,7 @@
 
   <section class="card" id="canais-sec">
     <h2>Por canal</h2>
-    <p class="mut">Saldo em cada live; cada chat é uma bolha diferente.</p>
+    <p class="mut">Saldo em cada live. Bolha do canal pelo acumulado: Lula − Flávio acima de +0,6 é pró-Lula, abaixo de −0,6 pró-Flávio, no meio dividida.</p>
     <div class="leg"><span><i style="background:var(--lula)"></i>Lula</span><span><i style="background:var(--fla)"></i>Flávio</span></div>
     <div class="minis" id="minis"></div>
     <p class="mut" id="minis-oc" style="margin-top:8px"></p>
@@ -213,7 +222,7 @@ function draw(id, labels, datasets, opts) {
   if (!charts[id]) charts[id] = new Chart($(id), { type: "line", data: { labels, datasets }, options: opts });
   else { charts[id].data.labels = labels; charts[id].data.datasets.forEach((d, i) => d.data = datasets[i].data); charts[id].update(); }
 }
-const linha = (label, data, cor, extra) => Object.assign({ label, data, borderColor: cor, backgroundColor: cor, borderWidth: 2,
+const linha = (label, data, cor, extra) => Object.assign({ label, data, borderColor: cor, backgroundColor: cor, borderWidth: 2, cubicInterpolationMode: "monotone",
   pointRadius: 0, pointHoverRadius: 5, pointHoverBorderColor: css("--card"), pointHoverBorderWidth: 2, tension: 0.25 }, extra || {});
 
 // eixo de minutos comum aos dois gráficos
@@ -281,8 +290,8 @@ function render0() {
         const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
         return c.datasetIndex < 2 ? `${nome}, média 3 min: ${sgn(c.parsed.y)}` : `${nome}, neste minuto: ${sgn(c.parsed.y)} (n=${ns[c.datasetIndex][c.dataIndex]})`; } };
       draw("s", eixo, [
-        linha("Lula (média 3 min)", mL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
-        linha("Flávio (média 3 min)", mF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
+        linha("Lula (média 3 min)", mL, css("--lula"), { spanGaps: 3, borderWidth: 2.5 }),
+        linha("Flávio (média 3 min)", mF, css("--fla"), { spanGaps: 3, borderWidth: 2.5 }),
         linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
         linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
       ], o);
@@ -319,8 +328,8 @@ function renderEq() {
     return [mm.line.map((y, i) => y === null || hw[i] === null ? null : Math.min(hi, y + hw[i] * escala)),
             mm.line.map((y, i) => y === null || hw[i] === null ? null : Math.max(lo, y - hw[i] * escala))]; };
   const banda = (lbl, cor, up, dn) => [
-    linha("~" + lbl, up, cor, { spanGaps: true, borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.25 }),
-    linha("~" + lbl, dn, cor, { spanGaps: true, borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.25, fill: "-1", backgroundColor: cor + "26" }) ];
+    linha("~" + lbl, up, cor, { spanGaps: 3, borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.25 }),
+    linha("~" + lbl, dn, cor, { spanGaps: 3, borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.25, fill: "-1", backgroundColor: cor + "26" }) ];
   const icL = ic(6), icF = ic(7), icPL = ic(8), icPF = ic(9);
   const mL = mm3(L, um), mF = mm3(F, um);
   const rodape = items => { const b = items.length ? bol[items[0].dataIndex] : []; return b.length ? "Bolhas: " + b.join(", ") : ""; };
@@ -346,8 +355,8 @@ function renderEq() {
   const dL = mL.map((y, i) => y !== null && mgL[i] !== null ? Math.abs(y - mgL[i]) : dMed);
   const dF = mF.map((y, i) => y !== null && mgF[i] !== null ? Math.abs(y - mgF[i]) : dMed);
   draw("e", eixo, [
-    linha("Lula · Claude", mL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
-    linha("Flávio · Claude", mF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("Lula · Claude", mL, css("--lula"), { spanGaps: 3, borderWidth: 2.5 }),
+    linha("Flávio · Claude", mF, css("--fla"), { spanGaps: 3, borderWidth: 2.5 }),
     linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
     linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
     ...banda("Lula", css("--lula"), ...faixa({ line: mL, raw: L }, icL, -1, 1, 1, dL)),
@@ -374,8 +383,8 @@ function renderEq() {
     const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
     return `${nome}, ${c.datasetIndex < 2 ? "média 3 min" : "neste minuto"}: ${Math.round(c.parsed.y)}% favoráveis`; } };
   draw("p", eixo, [
-    linha("Lula (média 3 min)", mpL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
-    linha("Flávio (média 3 min)", mpF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("Lula (média 3 min)", mpL, css("--lula"), { spanGaps: 3, borderWidth: 2.5 }),
+    linha("Flávio (média 3 min)", mpF, css("--fla"), { spanGaps: 3, borderWidth: 2.5 }),
     linha("_Lula", pL, css("--lula") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
     linha("_Flávio", pF, css("--fla") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
     ...banda("Lula", css("--lula"), ...faixa({ line: mpL, raw: pL }, icPL, 0, 100, 100)),
@@ -404,6 +413,7 @@ function renderEq() {
 
 function renderCanais() {
   const c = ultimo.c; if (!c || !c.canais) return;
+  const agoraMin = (c.atualizado || "").slice(0, 5);
   const menos = (hm, d) => { const [h, m] = hm.split(":").map(Number); const t = (h * 60 + m - d + 1440) % 1440;
     return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"); };
   const linhas = c.canais.map(k => {
@@ -414,25 +424,29 @@ function renderCanais() {
     const pm = ult3.length ? ult3.reduce((a, m) => a + (by[m] ? +by[m][1] || 0 : 0), 0) / 3 : null;
     const med = (iv, in_) => { let a = 0, b = 0; se.forEach(x => { const v = num(x[iv]), n = +x[in_] || 0; if (v !== null && n) { a += v * n; b += n; } }); return b ? a / b : null; };
     const nmin = se.filter(x => (num(x[2]) !== null && +x[4]) || (num(x[3]) !== null && +x[5])).length;
-    return { k, se, by, pm, L: med(2, 4), F: med(3, 5), nmin };
+    const ultMin = se.length ? se[se.length - 1][0] : null;
+    const parado = ultMin && agoraMin && (seg(agoraMin + ":00") - seg(ultMin + ":00") + 86400) % 86400 > 300 ? ultMin : null;
+    return { k, se, by, pm: parado ? 0 : pm, L: med(2, 4), F: med(3, 5), nmin, parado };
   }).sort((a, b) => (b.k.n_total || 0) - (a.k.n_total || 0));
   const f = x => x === null ? "–" : sgn(x);
   $("lista-canais").innerHTML = c.canais.map(k => `<a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.rotulo || k.nome)}</a>`).join(" ");
   $("canais-tbl").innerHTML = `<thead><tr><th>Canal</th><th><span class="lg">Mensagens</span><span class="sm">Msgs</span></th><th><span class="lg">Por min agora</span><span class="sm">/min</span></th><th><span class="sw" style="background:var(--lula)"></span>Lula</th><th><span class="sw" style="background:var(--fla)"></span>Flávio</th><th class="bc">Bolha</th></tr></thead><tbody>` +
-    linhas.map(r => `<tr><td><a href="${esc(r.k.url)}" target="_blank" rel="noopener">${esc(r.k.rotulo || r.k.nome)}</a>${r.k.bolha ? ` <span class="tag bm">${esc(r.k.bolha)}</span>` : ""}</td><td>${nf.format(r.k.n_total || 0)}</td><td>${r.pm === null ? "–" : nf.format(Math.round(r.pm))}</td><td>${f(r.L)}</td><td>${f(r.F)}</td><td class="bc">${r.k.bolha ? `<span class="tag" title="Lula − Flávio no canal: ${r.k.lean === null || r.k.lean === undefined ? "–" : sgn(+r.k.lean)}">${esc(r.k.bolha)}</span>` : '<span class="mut2">–</span>'}</td></tr>`).join("") + "</tbody>";
+    linhas.map(r => `<tr><td><a href="${esc(r.k.url)}" target="_blank" rel="noopener">${esc(r.k.rotulo || r.k.nome)}</a>${r.parado ? ` <span class="tag tp">sem mensagens desde ${r.parado}</span>` : ""}${r.k.bolha ? ` <span class="tag bm">${esc(r.k.bolha)}</span>` : ""}</td><td>${nf.format(r.k.n_total || 0)}</td><td>${r.pm === null ? "–" : nf.format(Math.round(r.pm))}</td><td>${f(r.L)}</td><td>${f(r.F)}</td><td class="bc">${r.k.bolha ? `<span class="tag" title="Lula − Flávio no canal: ${r.k.lean === null || r.k.lean === undefined ? "–" : sgn(+r.k.lean)}">${esc(r.k.bolha)}</span>` : '<span class="mut2">–</span>'}</td></tr>`).join("") + "</tbody>";
   // small multiples
-  const vis = linhas.filter(r => r.nmin >= 3), oc = linhas.filter(r => r.nmin < 3);
-  $("minis-oc").textContent = oc.length ? `Sem minigráfico, por terem menos de 3 minutos de sentimento classificado: ${oc.map(r => r.k.rotulo || r.k.nome).join(", ")}.` : "";
+  const MINMSG = 300;
+  const vis = linhas.filter(r => r.nmin >= 3 && (r.k.n_total || 0) >= MINMSG), oc = linhas.filter(r => !vis.includes(r));
+  $("minis-oc").textContent = oc.length ? `Sem minigráfico, por terem menos de ${MINMSG} mensagens ou menos de 3 minutos de sentimento classificado: ${oc.map(r => r.k.rotulo || r.k.nome).join(", ")}.` : "";
   let fim = EIXO ? EIXO[EIXO.length - 1] : INICIO;
   vis.forEach(r => { const u = r.se.length ? r.se[r.se.length - 1][0] : fim; if (u > fim) fim = u; });
   const eixo = minutos(INICIO, fim);
   const chave = vis.map(r => r.k.nome).join("|");
   if (chave !== MINIS) {
     Object.keys(charts).filter(id => id.startsWith("cm-")).forEach(id => { charts[id].destroy(); delete charts[id]; });
-    $("minis").innerHTML = vis.map((r, i) => `<div class="mini"><h3 title="${esc(r.k.rotulo || r.k.nome)}">${esc(r.k.rotulo || r.k.nome)}</h3><div class="mc"><canvas id="cm-${i}" role="img" aria-label="Sentimento em ${esc(r.k.rotulo || r.k.nome)}"></canvas></div></div>`).join("");
+    $("minis").innerHTML = vis.map((r, i) => `<div class="mini"><h3 title="${esc(r.k.rotulo || r.k.nome)}">${esc(r.k.rotulo || r.k.nome)}</h3><p class="selo" id="cm-s-${i}"></p><div class="mc"><canvas id="cm-${i}" role="img" aria-label="Sentimento em ${esc(r.k.rotulo || r.k.nome)}"></canvas></div></div>`).join("");
     MINIS = chave;
   }
   vis.forEach((r, i) => {
+    const sl = $("cm-s-" + i); if (sl) sl.textContent = r.parado ? `sem mensagens desde ${r.parado}` : "";
     const v = k => eixo.map(m => r.by[m] ? num(r.by[m][k]) : null);
     const n = k => eixo.map(m => r.by[m] ? (+r.by[m][k] || 0) : 0);
     const L = v(2), F = v(3), nL = n(4), nF = n(5);
@@ -446,8 +460,8 @@ function renderCanais() {
       const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
       return c.datasetIndex < 2 ? `${nome}, média 3 min: ${sgn(c.parsed.y)}` : `${nome}, neste minuto: ${sgn(c.parsed.y)} (n=${ns[c.datasetIndex][c.dataIndex]})`; } };
     draw("cm-" + i, eixo, [
-      linha("Lula (média 3 min)", mm3(L, nL), css("--lula"), { spanGaps: true }),
-      linha("Flávio (média 3 min)", mm3(F, nF), css("--fla"), { spanGaps: true }),
+      linha("Lula (média 3 min)", mm3(L, nL), css("--lula"), { spanGaps: 3, tension: 0 }),
+      linha("Flávio (média 3 min)", mm3(F, nF), css("--fla"), { spanGaps: 3, tension: 0 }),
       linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
       linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 2.5, pointHoverRadius: 5, pointBorderWidth: 0 }),
     ], o);
