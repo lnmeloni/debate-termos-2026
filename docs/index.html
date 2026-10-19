@@ -125,7 +125,8 @@
     <h2>Índice equilibrado por bolha</h2>
     <p class="mut">Saldo de −1 a +1 com peso igual para cada bolha de chat. Linha é a média de 3 min; faixa é o intervalo de 95%, e faixas cruzadas indicam empate técnico.</p>
     <div class="chart"><canvas id="e" aria-label="Índice equilibrado por bolha" role="img"></canvas></div>
-    <p class="mut" id="eq-bolhas" style="margin-top:8px"></p>
+    <p class="mut" id="eq-conc" style="margin-top:8px"></p>
+    <p class="mut" id="eq-bolhas" style="margin-top:4px"></p>
     <h3 class="h3s">Mensagens favoráveis (%)</h3>
     <p class="mut">Mesmo peso por bolha. É a métrica que empresas como a AP Exata publicam, para comparação.</p>
     <div class="chart sm"><canvas id="p" aria-label="Percentual de mensagens favoráveis" role="img"></canvas></div>
@@ -164,6 +165,7 @@
       <li><b>Bolhas.</b> Cada canal é classificado pelo próprio chat. Se, no acumulado, o saldo de Lula menos o de Flávio passa de +0,6, o canal é pró-Lula; abaixo de −0,6, pró-Flávio; no meio, dividido.</li>
       <li><b>Índice equilibrado.</b> Média ponderada pelo número de mensagens dentro de cada bolha, depois média simples entre as bolhas, para o chat maior não decidir sozinho. Antes das 20h52 ele depende de poucas bolhas.</li>
       <li><b>Faixa.</b> Intervalo de 95% calculado do tamanho da amostra de cada bolha. Não cobre erro do classificador.</li>
+      <li><b>Segundo classificador.</b> A mesma amostra, com o mesmo prompt, também é classificada pelo GPT (gpt-4o-mini), de outra empresa (linhas tracejadas). Quando os dois concordam, o sinal é mais confiável; a diferença entre eles é uma medida grosseira do erro do classificador, que a faixa de 95% não cobre.</li>
       <li><b>Cartões e tabela.</b> Os cartões mostram médias dos últimos 3 minutos completos, e a seta compara com os 3 anteriores. Na tabela, o saldo médio do canal é ponderado pelo número de mensagens, só nos minutos com dado.</li>
       <li><b>Termos.</b> Cada mensagem vira palavras e pares de palavras, sem palavras vazias, e cada termo conta uma vez por mensagem. "Subindo" é a frequência nos últimos 5 minutos dividida pela do resto do debate.</li>
       <li><b>Limites.</b> O chat não é o eleitorado, e cada live tem a sua bolha. Ironia e torcida organizada podem enganar o modelo, e minutos com poucas mensagens oscilam muito (o n aparece ao passar o mouse). Os dados chegam com 2 a 5 minutos de atraso, e a página se atualiza a cada 30 segundos.</li>
@@ -315,15 +317,36 @@ function renderEq() {
   o.plugins.tooltip.footerColor = css("--mut"); o.plugins.tooltip.footerFont = { weight: "normal", size: 11 };
   o.plugins.tooltip.callbacks = { footer: rodape, label: c => { if (c.parsed.y === null) return null;
     const nome = c.datasetIndex % 2 === 0 ? "Lula" : "Flávio";
-    return c.datasetIndex < 2 ? `${nome}, média 3 min: ${sgn(c.parsed.y)}` : `${nome}, neste minuto: ${sgn(c.parsed.y)}`; } };
+    if (c.datasetIndex >= 8) return `${nome}, GPT, média 3 min: ${sgn(c.parsed.y)}`;
+    return c.datasetIndex < 2 ? `${nome}, Claude, média 3 min: ${sgn(c.parsed.y)}` : `${nome}, Claude, neste minuto: ${sgn(c.parsed.y)}`; } };
+  // segundo classificador (GPT), mesma amostra
+  const g = Array.isArray(c.equilibrado_gpt) ? c.equilibrado_gpt.filter(x => x[0] >= INICIO) : [];
+  const gby = Object.fromEntries(g.map(x => [x[0], x]));
+  // só minutos em que o GPT cobriu as mesmas bolhas que o Claude (senão a comparação mistura composições)
+  const mesma = m => gby[m] && by[m] && Array.isArray(gby[m][5]) && Array.isArray(by[m][5]) && gby[m][5].slice().sort().join() === by[m][5].slice().sort().join();
+  const gv = k => eixo.map(m => mesma(m) ? num(gby[m][k]) : null);
+  const gL = gv(1), gF = gv(2);
   draw("e", eixo, [
-    linha("Lula (média 3 min)", mL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
-    linha("Flávio (média 3 min)", mF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("Lula · Claude", mL, css("--lula"), { spanGaps: true, borderWidth: 2.5 }),
+    linha("Flávio · Claude", mF, css("--fla"), { spanGaps: true, borderWidth: 2.5 }),
     linha("_Lula", L, css("--lula") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
     linha("_Flávio", F, css("--fla") + "70", { showLine: false, pointRadius: 3.5, pointHoverRadius: 6, pointBorderWidth: 0 }),
     ...banda("Lula", css("--lula"), ...faixa({ line: mL, raw: L }, icL, -1, 1, 1)),
     ...banda("Flávio", css("--fla"), ...faixa({ line: mF, raw: F }, icF, -1, 1, 1)),
+    linha("Lula · GPT", mm3(gL, um), css("--lula"), { spanGaps: true, borderWidth: 1.5, borderDash: [5, 4] }),
+    linha("Flávio · GPT", mm3(gF, um), css("--fla"), { spanGaps: true, borderWidth: 1.5, borderDash: [5, 4] }),
   ], o);
+  // concordância minuto a minuto entre os dois classificadores
+  const par = (a, b) => a.map((x, i) => [x, b[i]]).filter(([x, y]) => x !== null && y !== null);
+  const corr = pp => { const n = pp.length; if (n < 3) return null; const mx = pp.reduce((a, p) => a + p[0], 0) / n, my = pp.reduce((a, p) => a + p[1], 0) / n;
+    let sxy = 0, sxx = 0, syy = 0; pp.forEach(([x, y]) => { sxy += (x - mx) * (y - my); sxx += (x - mx) ** 2; syy += (y - my) ** 2; });
+    return sxx && syy ? sxy / Math.sqrt(sxx * syy) : null; };
+  const f2 = x => x === null ? "–" : x.toFixed(2).replace(".", ",");
+  const pl = par(L, gL), pf = par(F, gF), todos = pl.concat(pf);
+  const nmin = new Set(eixo.filter((m, i) => (L[i] !== null && gL[i] !== null) || (F[i] !== null && gF[i] !== null))).size;
+  $("eq-conc").textContent = nmin >= 3
+    ? `Concordância Claude × GPT em ${nmin} minutos com as mesmas bolhas: correlação ${f2(corr(todos))} (Lula ${f2(corr(pl))}, Flávio ${f2(corr(pf))}), diferença média absoluta ${f2(todos.reduce((a, p) => a + Math.abs(p[0] - p[1]), 0) / todos.length)}.`
+    : "Concordância Claude × GPT: poucos minutos em comum até agora.";
   const op = base({ min: 0, max: 100, ticks: { color: css("--mut"), stepSize: 25, callback: x => x + "%" } });
   op.plugins.tooltip.footerColor = css("--mut"); op.plugins.tooltip.footerFont = { weight: "normal", size: 11 };
   const mpL = mm3(pL, um), mpF = mm3(pF, um);
